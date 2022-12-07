@@ -1,0 +1,17 @@
+// CVEDIA-RT configuration options
+#cmakedefine01 WITH_MNN_MODULE
+
+#cmakedefine01 BUILD_WIN32
+#cmakedefine01 BUILD_LINUX_GENERIC
+
+// For handling GCC 5
+#cmakedefine01 HAVE_SHARED_MUTEX
+#cmakedefine01 HAVE_SHARED_TIMED_MUTEX
+
+#if HAVE_SHARED_MUTEX
+#define __shared_mutex_class std::shared_mutex
+#elif HAVE_SHARED_TIMED_MUTEX
+#define __shared_mutex_class std::shared_timed_mutex
+#else
+#error "Could not find support for shared_mutex or shared_timed_mutex"
+#endif

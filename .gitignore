@@ -1,0 +1,4 @@
+out/
+*.key
+cvedia-rt/bin/
+cvedia-rt/lib/

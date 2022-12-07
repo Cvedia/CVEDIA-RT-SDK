@@ -1,0 +1,247 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 22,
+        "patch": 1
+    },
+    "configurePresets": [
+        {
+            "name": "windows-generic",
+            "hidden": true,
+            "displayName": "Windows Generic",
+            "description": "Generic Windows build serving for inheriting.",
+            "generator": "Visual Studio 16 2019",
+            "toolset": "host=x64",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/builds/${presetName}/build/",
+            "installDir": "${sourceDir}/builds/${presetName}/redist/",
+            "cacheVariables": {
+              "CMAKE_INSTALL_PREFIX": "${sourceDir}/builds/${presetName}/redist/",
+              "WITH_MODELFORGE": "ON",
+              "WITH_UI": "ON",
+              "WITH_RENDERER_GLFW": "ON",
+              "WITH_RENDERER_REMOTE": "ON",
+              "WITH_RENDERER_SDL": "ON",
+              "WITH_BUFFER_OPENCV": "ON",
+              "WITH_VIDEO_STAB": "ON",
+              "WITH_CAMERA_DISCOVERY": "ON",
+              "WITH_OPENVINO_MODULE": "ON",
+              "WITH_ONNX_MODULE": "ON",
+              "WITH_TRT_MODULE": "ON",
+              "WITH_MQTT_MODULE": "ON",
+              "WITH_REST_MODULE": "ON",
+              "WITH_SCREENCAP_MODULE": "ON",
+              "WITH_TRACKER_MODULE": "ON",
+              "WITH_TRIGGER_MODULE": "ON",
+              "WITH_MOTION_MODULE": "ON",
+              "WITH_VIDEOREADER_MODULE": "ON",
+              "WITH_GSTREAMERREADER_MODULE": "ON",
+              "WITH_GSTREAMERWRITER_MODULE": "ON",
+              "WITH_WRITEDATA_MODULE": "ON",
+              "WITH_JSONIO_MODULE": "ON",
+              "WITH_SOLUTIONS": "ON",
+              "WITH_ONVIF": "ON",
+              "WITH_WEBSERVER": "ON",
+              "WITH_VERSION_CONTROL": "ON",
+              "BUILD_XTENSOR_LIB": "ON",
+              "BUILD_LUA_LIB": "ON",
+              "BUILD_CPU_FEATURES_LIB": "ON",
+              "CPPHTTPLIB_OPENSSL_SUPPORT": "ON",
+              "VCPKG_APPLOCAL_DEPS": "OFF",
+              "WITH_EVAL": "ON",
+              "WITH_CRTD_CLI": "ON",
+              "WITH_RUNINSTANCE_CLI": "ON",
+              "WITH_RUNINFERENCE_CLI": "ON",
+              "WITH_LISTNNDEVICES_CLI": "ON",
+              "WITH_GETDEVICECONFIG_CLI": "ON",
+              "WITH_MODELFORGE_CLI": "ON",
+              "WITH_BENCHMARK_CLI": "ON",
+              "WITH_EVALUATE_CLI": "ON",
+              "WITH_SYSTEMINFO_CLI": "ON",
+              "WITH_PRE_DEFAULT_MODULE": "ON",
+              "WITH_POST_CLASSIFIER_MODULE": "ON",
+              "WITH_POST_PASSTHRU_MODULE": "ON",
+              "WITH_POST_DISCARD_MODULE": "ON",
+              "WITH_POST_GFL_MODULE": "ON",
+              "WITH_POST_ULTRAFACE_MODULE": "ON",
+              "WITH_POST_YOLOV4_MODULE": "ON",
+              "WITH_POST_YOLOX_MODULE": "ON",
+              "WITH_POST_POINT_MODULE": "ON",
+              "WITH_POST_SAVE_MODULE": "ON",
+              "WITH_IMAGEREADER_MODULE": "ON",
+              "WITH_POST_NEURALSTYLE_MODULE": "ON"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "hostOS": ["Windows"]
+                }
+            }
+        },
+        {
+            "name": "windows64-Release",
+            "displayName": "Windows 64 Release",
+            "description": "Windows 64 Release",
+            "inherits": "windows-generic",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "WITH_TESTS": "OFF"
+            }
+        },
+        {
+            "name": "windows64-RelWithDebInfo",
+            "displayName": "Windows 64 RelWithDebInfo",
+            "description": "Windows 64 RelWithDebInfo",
+            "inherits": "windows-generic",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "WITH_TESTS": "ON"
+            }
+        },
+        {
+            "name": "windows64-Debug",
+            "displayName": "Windows 64 Debug",
+            "description": "Windows 64 Debug",
+            "inherits": "windows-generic",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "WITH_TESTS": "ON"
+            }
+        },
+        {
+            "name": "linux-generic",
+            "hidden": true,
+            "displayName": "Linux Generic",
+            "description": "Generic Linux build serving for inheriting.",
+            "generator": "Ninja",
+            "binaryDir": "builds/${presetName}/build/",
+            "installDir": "builds/${presetName}/redist/",
+            "cacheVariables": {
+                "WITH_UI": "ON",
+                "WITH_RENDERER_GLFW": "ON",
+                "WITH_RENDERER_REMOTE": "ON",
+                "WITH_BUFFER_OPENCV": "ON",
+                "WITH_VIDEO_STAB": "ON",
+                "WITH_EVAL": "ON",
+                "WITH_CAMERA_DISCOVERY": "ON",
+                "WITH_MODELFORGE": "ON",
+                "WITH_ONNX_MODULE": "ON",
+                "WITH_PADDLE_MODULE": "OFF",
+                "WITH_TRT_MODULE": "ON",
+                "WITH_MQTT_MODULE": "ON",
+                "WITH_REST_MODULE": "ON",
+                "WITH_TRACKER_MODULE": "ON",
+                "WITH_TRIGGER_MODULE": "ON",
+                "WITH_MOTION_MODULE": "ON",
+                "WITH_MNN_MODULE": "ON",
+                "WITH_VIDEOREADER_MODULE": "ON",
+                "WITH_GSTREAMERREADER_MODULE": "ON",
+                "WITH_GSTREAMERWRITER_MODULE": "ON",
+                "WITH_WRITEDATA_MODULE": "ON",
+                "WITH_JSONIO_MODULE": "ON",
+                "WITH_SOLUTIONS": "ON",
+                "WITH_ONVIF": "ON",
+                "WITH_WEBSERVER": "ON",
+                "WITH_VERSION_CONTROL": "ON",
+                "WITH_JETSON_UTILS": "OFF",
+                "WITH_JETSON_VIDEO_READER": "OFF",
+                "BUILD_XTENSOR_LIB": "ON",
+                "BUILD_LUA_LIB": "ON",
+                "BUILD_CPU_FEATURES_LIB": "ON",
+                "CPPHTTPLIB_OPENSSL_SUPPORT": "ON",
+                "WITH_CRTD_CLI": "ON",
+                "WITH_RUNINSTANCE_CLI": "ON",
+                "WITH_RUNINFERENCE_CLI": "ON",
+                "WITH_LISTNNDEVICES_CLI": "ON",
+                "WITH_GETDEVICECONFIG_CLI": "ON",
+                "WITH_MODELFORGE_CLI": "ON",
+                "WITH_BENCHMARK_CLI": "ON",
+                "WITH_EVALUATE_CLI": "ON",
+                "WITH_SYSTEMINFO_CLI": "ON",
+                "WITH_PRE_DEFAULT_MODULE": "ON",
+                "WITH_POST_CLASSIFIER_MODULE": "ON",
+                "WITH_POST_PASSTHRU_MODULE": "ON",
+                "WITH_POST_DISCARD_MODULE": "ON",
+                "WITH_POST_GFL_MODULE": "ON",
+                "WITH_POST_ULTRAFACE_MODULE": "ON",
+                "WITH_POST_YOLOV4_MODULE": "ON",
+                "WITH_POST_YOLOX_MODULE": "ON",
+                "WITH_POST_POINT_MODULE": "ON",
+                "WITH_POST_SAVE_MODULE": "ON",
+                "WITH_IMAGEREADER_MODULE": "ON",
+                "WITH_POST_NEURALSTYLE_MODULE": "ON"
+            }
+        },
+        {
+            "name": "linux64-RelWithDebInfo",
+            "displayName": "Linux64 RelWithDebInfo",
+            "description": "Linux64 RelWithDebInfo build",
+            "inherits": "linux-generic",
+            "binaryDir": "../../out/${presetName}/build/",
+            "installDir": "../../out/${presetName}/redist/",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "linux64-Release",
+            "displayName": "Linux64 Release",
+            "description": "Linux64 Release build",
+            "inherits": "linux-generic",
+            "binaryDir": "../../out/${presetName}/build/",
+            "installDir": "../../out/${presetName}/redist/",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "linux64-Debug",
+            "displayName": "Linux64 Debug",
+            "description": "Linux64 Debug build",
+            "inherits": "linux-generic",
+            "binaryDir": "../../out/${presetName}/build/",
+            "installDir": "../../out/${presetName}/redist/",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "windows64-Release",
+            "configurePreset": "windows64-Release",
+            "configuration": "Release",
+            "targets": "install"
+        },
+        {
+            "name": "windows64-RelWithDebInfo",
+            "configurePreset": "windows64-RelWithDebInfo",
+            "configuration": "RelWithDebInfo",
+            "targets": "install"
+        },
+        {
+            "name": "windows64-Debug",
+            "configurePreset": "windows64-Debug",
+            "configuration": "Debug",
+            "targets": "install"
+        },
+        {
+            "name": "linux64-RelWithDebInfo",
+            "configurePreset": "linux64-RelWithDebInfo"
+        },
+        {
+            "name": "linux64-Release",
+            "configurePreset": "linux64-Release"
+        },
+        {
+            "name": "linux64-Debug",
+            "configurePreset": "linux64-Debug"
+        }
+
+    ],
+    "vendor": {
+        "example.com/ExampleIDE/1.0": {
+            "autoFormat": false
+        }
+    }
+}
