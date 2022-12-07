@@ -250,7 +250,6 @@ configure_file (
 include_directories(${CMAKE_SOURCE_DIR}/RTCORE/include ${CMAKE_SOURCE_DIR}/3rdparty/libs/ ${CMAKE_SOURCE_DIR}/3rdparty/Lua/src ${CMAKE_SOURCE_DIR}/3rdparty/xtensor/include ${CMAKE_SOURCE_DIR}/3rdparty/xtl/include ${CMAKE_SOURCE_DIR}/3rdparty/ ${CMAKE_SOURCE_DIR}/3rdparty/imgui ${CMAKE_SOURCE_DIR}/3rdparty/cpu_features/include)
 
 # Include sub-projects.
-add_subdirectory ("cli")
 add_subdirectory ("Plugins")
 add_subdirectory ("3rdparty")
 
