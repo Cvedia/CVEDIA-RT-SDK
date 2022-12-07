@@ -1,3 +1,3 @@
 [submodule "cvedia-rt/src/Plugins"]
 	path = cvedia-rt/src/Plugins
-	url = git@github.com:Cvedia/Plugins.git
+	url = https://github.com/Cvedia/Plugins.git
