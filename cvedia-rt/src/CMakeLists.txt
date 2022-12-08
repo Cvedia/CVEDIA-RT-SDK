@@ -10,6 +10,13 @@ include(CheckCXXSymbolExists)
 
 # Allow the user to specify the path of CVEDIA_INSTALL_DIR
 if (WIN32)
+    set(CVEDIA_INSTALL_DIR "" CACHE PATH "Path to the CVEDIA install directory")
+
+    if (NOT EXISTS ${CVEDIA_INSTALL_DIR}/files/RTCORE.dll)
+        message(FATAL_ERROR "CVEDIA_INSTALL_DIR does not point to a valid installation of CVEDIA-RT (RTCORE.dll missing)")
+    endif()
+	
+	set(CVEDIA_INSTALL_DIR ${CVEDIA_INSTALL_DIR}/files)
 else()
     set(CVEDIA_INSTALL_DIR "/opt/cvedia-rt" CACHE PATH "Path to the CVEDIA install directory")
 
@@ -114,6 +121,9 @@ configure_file (
 include_directories(${CMAKE_SOURCE_DIR}/RTCORE/include ${CMAKE_SOURCE_DIR}/3rdparty/libs/ ${CMAKE_SOURCE_DIR}/3rdparty/xtensor/include ${CMAKE_SOURCE_DIR}/3rdparty/xtl/include ${CMAKE_SOURCE_DIR}/3rdparty/)
 
 if (WIN32)
+    add_library(RTCORE STATIC IMPORTED)
+    set_property(TARGET RTCORE PROPERTY
+                IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/../lib/win32/RTCORE.lib")
 else()
     add_library(RTCORE STATIC IMPORTED)
     set_property(TARGET RTCORE PROPERTY
