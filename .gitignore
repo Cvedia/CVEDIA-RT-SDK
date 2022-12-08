@@ -2,3 +2,5 @@ out/
 *.key
 cvedia-rt/bin/
 cvedia-rt/lib/
+/cvedia-rt/build
+/cvedia-rt/build2
