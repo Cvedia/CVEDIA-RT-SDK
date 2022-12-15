@@ -30,6 +30,9 @@ set(CMAKE_INSTALL_PREFIX ${CVEDIA_INSTALL_DIR})
 
 option(WITH_MNN_MODULE "Build MNN module" OFF)
 option(WITH_POST_YOLOV4_MODULE "Build with post-yolov4 module" ON)
+option(WITH_POST_YOLOV5_MODULE "Build with post-yolov5 module" ON)
+option(WITH_POST_YOLOV6_MODULE "Build with post-yolov6 module" ON)
+option(WITH_POST_YOLOV7_MODULE "Build with post-yolov7 module" ON)
 option(WITH_POST_YOLOX_MODULE "Build with post-yolox module" ON)
 option(WITH_POST_CLASSIFIER_MODULE "Build with post-classifier module" ON)
 
