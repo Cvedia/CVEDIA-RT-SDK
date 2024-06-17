@@ -1,0 +1,5 @@
+numpy
+jsonschema
+pytest
+requests
+opencv-python

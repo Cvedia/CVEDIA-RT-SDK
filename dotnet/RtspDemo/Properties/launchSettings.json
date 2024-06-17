@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RtspDemo": {
+      "commandName": "Project",
+      "commandLineArgs": "-i rtsp://vid.cvedia.com:8554/gsx_demo1 -r C:\\CVEDIA\\redist -s C:\\CVEDIA\\redist\\solutions -m C:\\dev"
+    }
+  }
+}
