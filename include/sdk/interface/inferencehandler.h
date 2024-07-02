@@ -7,6 +7,7 @@
 #include <xtensor/xarray.hpp>
 
 #include "defines.h"
+#include "builtin/basetypes.h"
 #include "builtin/moduleimpl.h"
 
 namespace cvedia {
@@ -58,7 +59,7 @@ namespace cvedia {
 
 				double* inferenceCount{};
 				
-				std::weak_ptr<iface::Instance> rtInstance;
+				std::shared_ptr<iface::Instance> rtInstance;
 				std::vector<cbuffer> inferenceBuffer;
 				//			std::vector<xt::xarray<float>> inputTensor;
 				std::vector<Rect2f> cropLocations;

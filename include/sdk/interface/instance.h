@@ -106,7 +106,7 @@ namespace cvedia {
 				virtual bool isRunning() const = 0;
 				virtual bool isPaused() const = 0;
 				virtual bool isConfigured() const = 0;
-//				virtual void setRunningState(bool state) = 0;
+				virtual void setRunningState(bool state) = 0;
 
 				// RT instance lifecycle management
 				virtual expected<void> start() = 0;
@@ -120,8 +120,7 @@ namespace cvedia {
 
 				// Event system interactions
 				virtual std::vector<std::string> getBoundEventTypes(std::string const& domain) = 0;
-				virtual int bindEvent(std::string const& domain, std::string const& eventType, std::function<void(pCValue, std::string, float)> handler, float callback_id = 0) = 0;
-				virtual void unbindEvent(std::string const& domain, int bindId) = 0;
+				virtual void bindEvent(std::string const& domain, std::string const& eventType, std::function<void(pCValue, std::string, float)> handler, float callback_id = 0) = 0;
 				virtual void postEvent(std::string const& domain, std::string const& eventType, pCValue data) = 0;
 
 				virtual pCValue getLastOutput() = 0;
@@ -152,6 +151,8 @@ namespace cvedia {
 				virtual expected<void> loadLicenses() = 0;
 				virtual expected<void> unloadLicenses() = 0;
 
+				//virtual expected<std::shared_ptr<cvedia::rt::solution::SolutionManager>> getSolutionManager() const = 0;
+				//virtual void setSolutionManager(std::shared_ptr<cvedia::rt::solution::SolutionManager> solutionManager) = 0;
 			};
 		}
 	}

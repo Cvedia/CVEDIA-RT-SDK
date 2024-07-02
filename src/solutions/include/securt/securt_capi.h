@@ -6,6 +6,38 @@
 extern "C" {
 #endif
 
+EXPORT int securt_create_context(char const* instanceUuid, char const* remoteIp);
+EXPORT int securt_delete_context(int const contextHandle);
+
+/**
+ * Checks if remote connection to a CVEDIA-RT instance is alive.
+ *
+ * @param handle The handle of the remote connection.
+ *
+ * @return Returns 1 if connection is alive, 0 if handle was not found, -1 if connection is dead or an error occurred.
+ */
+EXPORT int securt_is_alive(int const handle);
+
+/**
+ * Enables remote mode.
+ *
+ */
+EXPORT void securt_enable_remote_mode();
+
+/**
+ * Disables remote mode.
+ *
+ */
+EXPORT void securt_disable_remote_mode();
+
+/**
+ * Finds a remote CVEDIA-RT instance.
+ *
+ * @return Returns a string with the IP address of the remote CVEDIA-RT instance.
+ *
+ */
+EXPORT char* securt_find_remote_server();
+
 /**
  * Creates a new SecuRT instance with a given ID and name.
  *
@@ -26,6 +58,39 @@ EXPORT int securt_create_instance(int const handle, char const* instanceName);
  * @return 1 if the SecuRT instance was successfully destroyed, 0 if it did not exist.
  */
 EXPORT int securt_destroy_instance(int const handle);
+
+/**
+ * Starts a SecuRT instance.
+ *
+ * @param handle The handle of the SecuRT instance to start.
+ *
+ * @return int
+ *
+ * @note If the handle does not exist, has already been destroyed, or is already running, the function does nothing.
+ */
+EXPORT int securt_start(int const handle);
+
+/**
+ * Stops an existing SecuRT instance.
+ *
+ * @param handle The handle of the SecuRT instance to stop.
+ *
+ * @return int
+ *
+ * @note If the handle does not exist, has already been destroyed, or is already stopped, the function does nothing.
+ */
+EXPORT int securt_stop(int const handle);
+
+/**
+ * Restarts an existing SecuRT instance.
+ *
+ * @param handle The handle of the SecuRT instance to restart.
+ *
+ * @return int
+ *
+ * @note If the handle does not exist, has already been destroyed, or is already stopped, the function does nothing.
+ */
+EXPORT int securt_restart(int const handle);
 
 /**
  * Creates a new area in the specified SecuRT instance.
@@ -151,82 +216,6 @@ EXPORT int securt_create_armed_person_area(int const handle, char const* areaId,
                                            int numPoints, double const* color);
 
 /**
- * Creates a new object left area in the specified SecuRT instance.
- *
- * @param handle The handle of the SecuRT instance.
- * @param areaId Unique identifier for the new area. Must be a null-terminated string.
- * @param name Name for the new area. Must be a null-terminated string.
- * @param coords Array of points containing the coordinates of the area (x1, y1, x2, y2, ...).
- * @param numPoints The total size of the coordinates array.
- * @param minDuration The minimum duration in seconds for an object to be considered as left.
- * @param color Color of the line for visualization purposes
- *
- * @return Returns 1 if the area was successfully created, 0 otherwise.
- *
- * @note The function returns 0 if the areaId already exists in the instance or if the numPoints does not match the size of the coordinates arrays.
- */
-EXPORT int securt_create_object_left_area(int const handle, char const* areaId, char const* name, float const* coords,
-    int numPoints, int minDuration, double const* color);
-
-/**
- * Creates a new object removed area in the specified SecuRT instance.
- *
- * @param handle The handle of the SecuRT instance.
- * @param areaId Unique identifier for the new area. Must be a null-terminated string.
- * @param name Name for the new area. Must be a null-terminated string.
- * @param coords Array of points containing the coordinates of the area (x1, y1, x2, y2, ...).
- * @param numPoints The total size of the coordinates array.
- * @param minDuration The minimum duration in seconds for an object to be considered as removed.
- * @param color Color of the line for visualization purposes
- *
- * @return Returns 1 if the area was successfully created, 0 otherwise.
- *
- * @note The function returns 0 if the areaId already exists in the instance or if the numPoints does not match the size of the coordinates arrays.
- */
-EXPORT int securt_create_object_removed_area(int const handle, char const* areaId, char const* name, float const* coords,
-    int numPoints, int minDuration, double const* color);
-
-/**
- * Creates a new tailgating line in the specified SecuRT instance.
- *
- * @param handle The handle of the SecuRT instance.
- * @param lineId Unique identifier for the new line. Must be a null-terminated string.
- * @param name Name for the new line. Must be a null-terminated string.
- * @param coords Array of points containing the coordinates of the line (x1, y1, x2, y2, ...).
- * @param numPoints The total size of the coordinates array.
- * @param classes Pointer to an array containing the class IDs of interest (1 = Person, 2 = Animal, 3 = Vehicle, 4 = Unknown).
- * @param classesSize The number of classes in the classes array.
- * @param maxDuration The maximum duration in seconds for an object to be considered as tailgating.
- * @param color Color of the line for visualization purposes
- *
- * @return Returns 1 if the line was successfully created, 0 otherwise.
- *
- * @note The function returns 0 if the lineId already exists in the instance.
- */
-EXPORT int securt_create_tailgating_line(int const handle, char const* lineId, char const* name, float const* coords,
-    int numPoints, int const* classes, int classesSize, int maxDuration, int direction, double const* color);
-
-/**
- * * Creates a new fallen person area in the specified SecuRT instance.
- * *
- * * @param handle The handle of the SecuRT instance.
- * * @param areaId Unique identifier for the new area. Must be a null-terminated string.
- * * @param name Name for the new area. Must be a null-terminated string.
- * * @param coords Array of points containing the coordinates of the area (x1, y1, x2, y2, ...).
- * * @param numPoints The total size of the coordinates array.
- * * @param color Color of the area for visualization purposes
- * *
- * * @return Returns 1 if the area was successfully created, 0 otherwise.
- * *
- * * @note The function returns 0 if the areaId already exists in the instance or if the numPoints does not match the size of the coordinates arrays.
- * */
-EXPORT int securt_create_fallen_person_area(int const handle, char const* areaId, char const* name, float const* coords,
-	int numPoints, double const* color);
-
-EXPORT int secure_create_license_plate_access_control_area(int const handle, char const* areaId, char const* name, float const* coords,
-	int numPoints, double const* color);
-
-/**
  * @brief Defines a motion area within a specified SecuRT instance.
  *
  * @param handle The handle of the SecuRT instance.
@@ -267,14 +256,56 @@ EXPORT int securt_delete_area(int const handle, char const* areaId);
 EXPORT int securt_delete_line(int const handle, char const* lineId);
 
 /**
- * * @brief Sets the appearance search mode of the specified SecuRT instance.
- * *
- * * @param handle The handle of the SecuRT instance.
- * * @param mode The appearance search mode to be set (0 = Off, 1 = Person, 2 = Vehicle, 3 = Person & Vehicle).
- * *
- * * @note The default appearance search mode is Off.
- * */
-EXPORT int securt_set_appearance_search(int const handle, int const mode);
+ * @brief Pushes a frame into the specified SecuRT instance for processing.
+ *
+ * @param handle The handle of the SecuRT instance.
+ * @param buffer The buffer containing the frame data.
+ * @param width The width of the frame.
+ * @param height The height of the frame.
+ * @param timestampMs The timestamp of the frame in milliseconds.
+ *
+ * @return Returns 1 if the frame was successfully pushed, 0 is the queue was full. 
+ */
+EXPORT int securt_push_frame(int const handle, void const* buffer, int width, int height,
+                             unsigned long long int timestampMs);
+
+/**
+ * @brief Pushes a H.264 video frame into the specified SecuRT instance for processing.
+ * 
+ * @param handle The handle of the SecuRT instance.
+ * @param buffer The buffer containing the frame data.
+ * @param dataSize The size of the frame data.
+ * @param timestampMs The timestamp of the frame in milliseconds.
+ * 
+ * @return Returns 1 if the frame was successfully pushed, 0 is the queue was full.
+ *
+ */
+EXPORT int securt_push_h264_frame(int const handle, void const* buffer, unsigned long long int const dataSize,
+                                  unsigned long long int const timestampMs);
+
+/**
+ * @brief Pushes a H.265 video frame into the specified SecuRT instance for processing.
+ *
+ * @param handle The handle of the SecuRT instance.
+ * @param buffer The buffer containing the frame data.
+ * @param dataSize The size of the frame data.
+ * @param timestampMs The timestamp of the frame in milliseconds.
+ *
+ * @return Returns 1 if the frame was successfully pushed, 0 is the queue was full.
+ *
+ */
+EXPORT int securt_push_h265_frame(int const handle, void const* buffer, unsigned long long int const dataSize,
+                                  unsigned long long int const timestampMs);
+
+/**
+ * @brief Returns events from the specified SecuRT instance.
+ *
+ * @param handle The handle of the SecuRT instance.
+ * @param outJson Pointer to a char* containing the JSON array of events serialized as a string; must be freed by the caller.
+ *
+ * @return Returns 1 if there is an event, 0 otherwise
+*/
+EXPORT int securt_consume_events(int const handle, char** outJson);
 
 /**
  * @brief Sets the detector mode of the specified SecuRT instance.
@@ -462,7 +493,72 @@ EXPORT int securt_need_data(int const handle, long long int const currentFrameTi
  */
 EXPORT int securt_is_instance_running(int const handle);
 
+/**
+ * @brief Frees a string allocated by the SecuRT SDK.
+ *
+ * @param ptr The pointer to the string to be freed.
+ *
+ */
+EXPORT void securt_free_string(void* ptr);
+
 EXPORT int securt_set_blocking_readahead_queue(int const handle, int const state);
+
+/**
+ * Sets the input source of a SecuRT instance to an RTSP stream.
+ *
+ * @param handle The handle of the SecuRT instance.
+ * @param rtspUrl The URL of the RTSP stream.
+ *
+ * @return Returns 1 if the input source was successfully set, -1 otherwise.
+ */
+EXPORT int securt_set_input_to_rtsp(int const handle, char const* rtspUrl);
+
+/**
+* Sets the input source of a SecuRT instance to manual mode.
+*
+* @param handle The handle of the SecuRT instance.
+*
+* @return Returns 1 if the input source was successfully set, 0 otherwise.
+*/
+EXPORT int securt_set_input_to_manual(int const handle);
+
+/**
+ * Enables HLS output for a SecuRT instance.
+ *
+ * @param handle The handle of the SecuRT instance.
+ *
+ * @return Returns a string with the HLS output URL if successful, NULL otherwise.
+ */
+EXPORT char* securt_enable_hls_output(int const handle);
+
+/**
+ * Disables HLS output for a SecuRT instance.
+ *
+ * @param handle The handle of the SecuRT instance.
+ *
+ * @return Returns 1 if the HLS output was successfully disabled, 0 otherwise.
+ */
+EXPORT int securt_disable_hls_output(int const handle);
+
+/**
+ * Enables RTSP output for a SecuRT instance.
+ *
+ * @param handle The handle of the SecuRT instance.
+ * @param rtspUrl The URL of the RTSP stream.
+ *
+ * @return Returns 1 if the RTSP output was successfully enabled, 0 otherwise.
+ */
+EXPORT int securt_enable_rtsp_output(int const handle, char const* rtspUrl);
+
+/**
+ * Disables RTSP output for a SecuRT instance.
+ *
+ * @param handle The handle of the SecuRT instance.
+ * @param rtspUrl The URL of the RTSP stream.
+ *
+ * @return Returns 1 if the RTSP output was successfully disabled, 0 otherwise.
+ */
+EXPORT int securt_disable_rtsp_output(int const handle, char const* rtspUrl);
 
 /**
  * @brief Retrieves the instance information for a SecuRT instance.
@@ -511,15 +607,9 @@ EXPORT int securt_update_instance_options(int const handle, int const detectorMo
                                           int const frameRateLimit, int const metadataMode, int const statisticsMode,
                                           int const diagnosticsMode, int const debugMode);
 
-/**
- * Sets the configuration value for a SecuRT instance.
- *
- * @param handle The handle of the SecuRT instance.
- * @param key The key of the configuration value to set.
- * @param value The value of the configuration to set.
- *
- * @return Returns 1 if the configuration value was successfully set, 0 otherwise.
- */
+// internal method
+EXPORT void securt_reset();
+
 EXPORT int securt_set_config_value(int const handle, char const* key, char const* value);
 
 /**
@@ -547,18 +637,6 @@ EXPORT int securt_set_statistics_mode(int const handle, int statisticsMode);
 EXPORT int securt_set_metadata_mode(int const handle, int metadataMode);
 
 EXPORT int securt_set_render_preset(int const contextHandle, char const* preset);
-
-/**
- * * Sets the auto-restart state for a SecuRT instance.
- * *
- * * @param contextHandle The handle of the SecuRT instance.
- * * @param state The auto-restart state to set. Possible values:
- * *              - 0: Disable auto-restart.
- * *              - 1: Enable auto-restart.
- * *
- * * @return Returns 1 if the auto-restart state was successfully set, 0 otherwise.
- * */
-EXPORT int securt_set_auto_restart(int const contextHandle, int const state);
 
 #ifdef __cplusplus
 }

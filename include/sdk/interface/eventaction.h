@@ -25,7 +25,7 @@ namespace cvedia {
 
 				virtual expected<bool> loadConfig(pCValue eventActionsConfigObj) = 0;
 
-				//virtual void processActions() = 0;
+				virtual void processActions() = 0;
 				virtual pCValue processScript(pCValue config, pCValue data) = 0;
 				virtual void addEventToQueue(std::string id, pCValue const ev) = 0;
 

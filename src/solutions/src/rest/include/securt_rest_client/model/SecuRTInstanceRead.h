@@ -78,7 +78,7 @@ public:
     EXPORT void setName(const utility::string_t& value);
 
     /// <summary>
-    /// The value is filled only when the instance is running
+    /// 
     /// </summary>
     EXPORT utility::string_t getVersion() const;
     EXPORT bool versionIsSet() const;

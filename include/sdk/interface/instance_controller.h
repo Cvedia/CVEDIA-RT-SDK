@@ -11,11 +11,13 @@
 
 namespace cvedia {
 	namespace rt {
+		namespace solution {
+			class SolutionManager;
+		}
 
 		namespace iface {
 			class Solution;
 			class Instance;
-			class SolutionManager;
 			
 
 			class EXPORT_CLASS InstanceController {
@@ -25,15 +27,10 @@ namespace cvedia {
 				virtual expected<std::shared_ptr<iface::Instance>> loadInstance() = 0;
 				virtual expected<void> loadInstanceAsync() = 0;
 				virtual expected<void> unloadInstance() = 0;
-
-				virtual bool isInstanceLoaded() = 0;
-				virtual bool isInstanceRunning() = 0;
-				virtual bool isInstancePaused() = 0;
-				
+				virtual expected<void> isInstanceLoaded() = 0;
+				virtual expected<void> isInstanceRunning() = 0;
 				virtual expected<void> startInstance() = 0;
-				virtual expected<void> stopInstance() = 0;
-				virtual expected<void> restartInstance() = 0;
-				
+				virtual expected<void> stopInstance()= 0;
 				NODISCARD virtual expected<void> reloadConfigFromDisk() = 0;
 
 				virtual uCVDictRoot config() = 0;
@@ -56,9 +53,7 @@ namespace cvedia {
 				virtual expected<std::weak_ptr<iface::Solution>> getSolution() = 0;
 				virtual expected<std::weak_ptr<Instance>> getInstance() = 0;
 				virtual bool getAutoStart() const = 0;
-				virtual bool getAutoRestart() const = 0;
 				NODISCARD virtual expected<void> setAutoStart(bool autoStart) = 0;
-				NODISCARD virtual expected<void> setAutoRestart(bool autoRestart) = 0;
 				virtual bool getReadOnly() const = 0;
 				NODISCARD virtual expected<void> setReadOnly(bool readOnly) = 0;
 				virtual bool isSystemInstance() const = 0;
@@ -67,9 +62,8 @@ namespace cvedia {
 				virtual bool isPersistent() const = 0;
 				virtual expected<void> setPersistent(bool persistent) = 0;
 
-				virtual expected<void> enableSolutionManager(bool fallbackToDefault = true) = 0;
-				virtual expected<std::shared_ptr<iface::SolutionManager>> getSolutionManager() const = 0;
-				virtual expected<std::shared_ptr<iface::SolutionManager>> getSolutionManagerOrCreate(bool fallbackToDefault = true) = 0;
+				virtual void setSolutionManager(std::shared_ptr<cvedia::rt::solution::SolutionManager> solutionManager) = 0;
+				virtual expected<std::shared_ptr<cvedia::rt::solution::SolutionManager>> getSolutionManager() const = 0;
 
 				NODISCARD virtual expected<void> save() = 0;
 			};

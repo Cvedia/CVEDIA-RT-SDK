@@ -11,9 +11,7 @@ extern "C" {
 	EXPORT int license_add_license_key(char const* licenseKey);
 	EXPORT int license_remove_license_key(char const* licenseKey, int force);
 	EXPORT int license_load_licenses();
-	EXPORT int license_unload_licenses();
-	EXPORT int license_activate_trial();
-	EXPORT char* license_get_trial();
+	EXPORT int license_unload_licenses(); 
 #ifdef __cplusplus
 }
 #endif

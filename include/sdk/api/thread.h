@@ -5,46 +5,12 @@
 */
 #pragma once
 #include <thread>
-#include <atomic>
 #include <mutex>
 #include <shared_mutex>
 #include <memory>
 
 #include "defines.h"
 #include "rterror.h"
-
-#include <tracy/Tracy.hpp>
-
-#define REGISTER_THREAD_SCOPED(threadType) \
-	auto &&__registrationScopeExp = ::cvedia::rt::api::thread::registerThreadScoped(threadType, 1, __LOCATION__); \
-	if (!__registrationScopeExp) { \
-		return; \
-	} \
-	auto __registrationScope = std::move(__registrationScopeExp.value())
-
-#define REGISTER_THREAD_SCOPED_WARN(threadType) \
-	auto &&__registrationScopeExp = ::cvedia::rt::api::thread::registerThreadScoped(threadType, 1, __LOCATION__); \
-	if (!__registrationScopeExp) { \
-		LOGW << "Failed to register thread: " << __registrationScopeExp.error().message(); \
-		return; \
-	} \
-	auto __registrationScope = std::move(__registrationScopeExp.value())
-
-#define TRY_REGISTER_THREAD_SCOPED(threadType) RT_TRY(auto __registrationScope, ::cvedia::rt::api::thread::registerThreadScoped(threadType, 1, __LOCATION__))
-
-#define REGISTER_WORKER_THREAD_SCOPED REGISTER_THREAD_SCOPED(cvedia::rt::ThreadType::Worker)
-#define REGISTER_WORKER_THREAD_SCOPED_WARN REGISTER_THREAD_SCOPED_WARN(cvedia::rt::ThreadType::Worker)
-#define TRY_REGISTER_WORKER_THREAD_SCOPED TRY_REGISTER_THREAD_SCOPED(cvedia::rt::ThreadType::Worker)
-
-#define REGISTER_INSTANCE_THREAD_SCOPED REGISTER_THREAD_SCOPED(cvedia::rt::ThreadType::Instance)
-#define REGISTER_INSTANCE_THREAD_SCOPED_WARN REGISTER_THREAD_SCOPED_WARN(cvedia::rt::ThreadType::Instance)
-#define TRY_REGISTER_INSTANCE_THREAD_SCOPED TRY_REGISTER_THREAD_SCOPED(cvedia::rt::ThreadType::Instance)
-
-#define REGISTER_GLOBAL_THREAD_SCOPED REGISTER_THREAD_SCOPED(cvedia::rt::ThreadType::Global)
-#define REGISTER_GLOBAL_THREAD_SCOPED_WARN REGISTER_THREAD_SCOPED_WARN(cvedia::rt::ThreadType::Global)
-#define TRY_REGISTER_GLOBAL_THREAD_SCOPED TRY_REGISTER_THREAD_SCOPED(cvedia::rt::ThreadType::Global)
-
-#define DETACHED_THREAD_SCOPED ::cvedia::rt::api::thread::DetachedThreadScope __detachedThreadScope
 
 namespace cvedia {
 	namespace rt {
@@ -85,25 +51,7 @@ namespace cvedia {
 					// get/set Counter
 					// get/set Version
 				}
-
-				inline std::atomic<int> detachedThreadCount = 0;
-
-				// This class is used to ensure that the detached thread count is handled automatically
-				class EXPORT_CLASS DetachedThreadScope {
-				public:
-					DetachedThreadScope()
-					{
-						++detachedThreadCount;
-					}
-
-					~DetachedThreadScope()
-					{
-						--detachedThreadCount;
-					}
-				};
-
 				EXPORT void sleep(int ms);
-				EXPORT void dump();
 				NODISCARD EXPORT expected<std::shared_ptr<internal::ThreadContext>> getThreadContext();
 				NODISCARD EXPORT expected<int> getThreadVersion();
 				NODISCARD EXPORT expected<std::shared_ptr<iface::Solution>> getActiveSolution();
@@ -112,28 +60,9 @@ namespace cvedia {
 				NODISCARD EXPORT expected<void> setActiveInstance(std::weak_ptr<iface::Instance> instance);
 				NODISCARD EXPORT expected<void> pinOnCpuCore();
 				NODISCARD EXPORT expected<void> clearActiveInstance();
-				
+				NODISCARD EXPORT expected<void> registerThread(ThreadType t, int version = 1, std::weak_ptr<iface::Instance> instance = {});
+				NODISCARD EXPORT expected<void> registerThread(std::thread&& th, ThreadType t, int version = 1);
 				NODISCARD EXPORT expected<void> unregisterThread();
-				NODISCARD EXPORT expected<void> unregisterThread(std::thread::id id);
-				EXPORT void deleteAllThreads();
-
-				// This class is used to ensure that the thread is unregistered when it goes out of scope
-				class EXPORT_CLASS ThreadRegistrationScope {
-				public:
-					~ThreadRegistrationScope()
-					{
-						(void)::cvedia::rt::api::thread::unregisterThread();
-					}
-				};
-
-				NODISCARD EXPORT expected<void> registerThread(ThreadType t, int version = 1, std::weak_ptr<iface::Instance> instance = {}, std::string const& location = "");
-				NODISCARD EXPORT expected<void> registerThread(std::thread&& th, ThreadType t, int version = 1, std::string const& location = "");
-				NODISCARD EXPORT expected<std::unique_ptr<ThreadRegistrationScope>> registerThreadScoped(ThreadType t, int version = 1, std::string const& location = "");
-				NODISCARD EXPORT expected<std::unique_ptr<ThreadRegistrationScope>> registerThreadScoped(ThreadType t, int version, std::weak_ptr<iface::Instance> instance, std::string const& location);
-
-				NODISCARD EXPORT bool isRegistered();
-				NODISCARD EXPORT bool isRegistered(std::thread::id id);
-
 				EXPORT void setPerformanceMode(Affinity mode);
 				NODISCARD EXPORT expected<void> setThreadStorage(StorageType s); // TODO: @AJ setActiveStorage
 				NODISCARD EXPORT expected<int> getVersion();

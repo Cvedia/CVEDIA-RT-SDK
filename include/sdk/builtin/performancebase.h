@@ -11,8 +11,6 @@
 #include <map>
 #include <deque>
 
-#include <tracy/Tracy.hpp>
-
 #include "defines.h"
 
 #define MAX_PERFORMANCE_BUFFER 200
@@ -48,7 +46,7 @@ namespace cvedia {
 				std::map<std::string, std::deque<float>> updatedPerformanceCounters_;
 				std::map<std::string, std::deque<float>> runtimePerformanceCounters_;
 				std::map<std::string, float> presetCounters_;
-				mutable shared_mutex_inst(performanceMux_);
+				mutable shared_mutex_class performanceMux_;
 			};
 		}
 	}

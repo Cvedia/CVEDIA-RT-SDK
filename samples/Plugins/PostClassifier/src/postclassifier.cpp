@@ -3,8 +3,7 @@
 
 	SPDX-License-Identifier: Apache-2.0
 */
-#include "defines.h"
-
+#include "rtconfig.h"
 #include "cvalue.h"
 #include "api/inference.h"
 #include "interface/inferencehandler.h"
@@ -53,15 +52,7 @@ static void softmax(float* input, size_t size) {
 	size_t i;
 	float m, sum, constant;
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wnan-infinity-disabled"
-#endif
 	m = -INFINITY;
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
 	for (i = 0; i < size; ++i) {
 		if (m < input[i]) {
 			m = input[i];

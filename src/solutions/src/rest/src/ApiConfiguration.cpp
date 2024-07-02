@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-#include "rt_rest_client/ApiConfiguration.h"
+#include "securt_rest_client/ApiConfiguration.h"
 
 namespace cvedia {
 namespace rt {

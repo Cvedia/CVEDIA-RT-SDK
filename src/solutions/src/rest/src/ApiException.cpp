@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-#include "rt_rest_client/ApiException.h"
+#include "securt_rest_client/ApiException.h"
 
 namespace cvedia {
 namespace rt {

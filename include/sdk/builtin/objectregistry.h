@@ -22,16 +22,13 @@ namespace cvedia {
 		public:
 			EXPORT expected<std::shared_ptr<T>> registerObject(KeyType const& objectName, std::shared_ptr<T> object);
 			EXPORT expected<void> unregisterObject(KeyType const& objectName);
-			EXPORT expected<void> renameObject(KeyType const& oldId, KeyType const& newId);
-			NODISCARD EXPORT expected<std::shared_ptr<T>> getObject(KeyType const& objectName) const;
-			EXPORT bool hasObject(KeyType const& objectName) const;
-			EXPORT std::unordered_set<std::shared_ptr<T>> getObjects() const;
-			EXPORT std::unordered_set<KeyType> getObjectKeys() const;
-			EXPORT int getObjectCount() const;
-			NODISCARD EXPORT expected<void> clearObjects();
+			NODISCARD EXPORT expected<std::shared_ptr<T>> getObject(KeyType const& objectName);
+			EXPORT bool hasObject(KeyType const& objectName);
+			EXPORT std::unordered_set<std::shared_ptr<T>> getObjects();
+			EXPORT std::unordered_set<KeyType> getObjectKeys();
+			EXPORT int getObjectCount();
+			EXPORT void clearObjects();
 		private:
-			EXPORT expected<void> _unregisterObject(KeyType const& objectName);
-
 			std::map<KeyType, std::shared_ptr<T>> objects_;
 		};
 	}

@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-#include "rt_rest_client/JsonBody.h"
+#include "securt_rest_client/JsonBody.h"
 
 namespace cvedia {
 namespace rt {

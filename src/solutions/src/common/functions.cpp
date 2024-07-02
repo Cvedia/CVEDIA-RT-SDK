@@ -3,8 +3,6 @@
 #include <iomanip>
 #include <ios>
 #include <sstream>
-#include <cstring>
-
 
 std::string floatToString(float value, int precision) {
 	std::stringstream ss;
@@ -110,12 +108,4 @@ cvedia::rt::Rect2f padToAspectRatio(cvedia::rt::Rect2f const& rect, float aspect
 	paddedRect.height = std::min(std::max(paddedRect.height, 0.0f), size.height - paddedRect.y);
 
 	return paddedRect;
-}
-
-char* copyString(std::string const& str) {
-#ifdef _WIN32
-	return _strdup(str.c_str());
-#else
-	return strdup(str.c_str());
-#endif
 }

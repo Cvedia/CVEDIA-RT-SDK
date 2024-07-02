@@ -3,7 +3,6 @@
 
 %{
 /* Includes the header in the wrapper code */
-#include "core/core_capi.h"
 #include "securt/securt_capi.h"
 #include "api/solutions_capi.h"
 #include "api/system_capi.h"
@@ -19,6 +18,18 @@
 %}
 
 #define EXPORT
+
+// typemap for numpy array -> C buffer
+%typemap(in) (void const* buffer, int width, int height) {
+    if (!PyArray_Check($input) || !PyArray_ISCONTIGUOUS($input)) {
+        PyErr_SetString(PyExc_TypeError, "Requires a contiguous numpy array");
+        return NULL;
+    }
+    
+    $2 = PyArray_DIMS($input)[1];  // width (assuming array shape is height x width)
+    $3 = PyArray_DIMS($input)[0];  // height
+    $1 = PyArray_DATA($input);
+}
 
 %typemap(in) (float const* coords, int numPoints) {
     if (!PyList_Check($input)) {
@@ -126,7 +137,7 @@
 %typemap(out) char* {
     if ($1) {
         $result = PyUnicode_FromString($1);  // Convert char * to Python string
-        core_free_string($1);                // Free the original C string
+        securt_free_string($1);              // Free the original C string
     } else {
         $result = Py_None;
         Py_INCREF(Py_None);                  // If NULL, return None in Python

@@ -23,8 +23,6 @@ EXPORT std::string toString(float const& val, int const precision);
 EXPORT std::string toString(double const& val, int const precision);
 EXPORT std::string toString(int const& val, int const precision);
 
-EXPORT std::string toLowerCase(std::string const& val);
-
 EXPORT std::vector<unsigned char> readFile(std::string const& path);
 EXPORT expected<std::string> readFileAsString(std::string const& path);
 EXPORT bool saveToFile(std::string const& path, std::string const& data);

@@ -5,7 +5,6 @@
 /* Includes the header in the wrapper code */
 #include "api/rt_capi.h"
 #include "api/config_capi.h"
-#include "core/core_capi.h"
 %}
 
 %include "numpy.i"
@@ -91,7 +90,7 @@
 %typemap(out) char* {
     if ($1) {
         $result = PyUnicode_FromString($1);  // Convert char * to Python string
-        core_free_string($1);              // Free the original C string
+        securt_free_string($1);              // Free the original C string
     } else {
         $result = Py_None;
         Py_INCREF(Py_None);                  // If NULL, return None in Python

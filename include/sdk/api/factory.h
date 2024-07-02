@@ -16,7 +16,6 @@ namespace cvedia {
 	namespace rt {
 		enum Codec : size_t;
 		namespace iface {
-			class IdentityStore;
 			class WsDiscovery;
 			class VideoDecoder;
 			class Exporter;
@@ -40,7 +39,6 @@ namespace cvedia {
 			class REST;
 			class Zone;
 			class Tracker;
-			class IdentityProvider;
 			class MotionDetection;
 			class InferenceEngine;
 			class ScriptEngine;
@@ -61,7 +59,7 @@ namespace cvedia {
 		namespace api {
 			namespace factory {
 				template <class T, typename ...Args>
-				class EXPORT_CLASS Factory
+				class Factory
 				{
 					typedef std::unique_ptr<T> (*createFunc)(Args && ...args);
 
@@ -113,8 +111,6 @@ namespace cvedia {
 				using WsDiscovery = Factory<cvedia::rt::iface::WsDiscovery>;
 				using VideoDecoder = Factory<cvedia::rt::iface::VideoDecoder, std::string const&, Codec const&>;
 				using Encryption = Factory<cvedia::rt::iface::Encryption, std::string const&>;
-				using IdentityProvider = Factory<cvedia::rt::iface::IdentityProvider, std::string const&>;
-				using IdentityStore = Factory<cvedia::rt::iface::IdentityStore>;
 			}
 		}
 	}

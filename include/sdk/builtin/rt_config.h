@@ -18,7 +18,6 @@ namespace cvedia {
 			static expected<void> initialize();
 			static uCVDictRoot config();
 			static uCVDictRoot config(std::string const& path);
-			static void reset();
 		private:
 			static std::shared_ptr<iface::CVDict> config_;
 		};

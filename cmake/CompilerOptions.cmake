@@ -28,7 +28,7 @@ include ("cmake/CheckMutex.cmake")
 
 if (NOT MSVC)
     if(ENABLE_CODE_COVERAGE)
-        add_compile_options(-g -O0 --coverage)
+        add_compile_options(-g -O0 --coverage -fprofile-arcs -ftest-coverage)
     endif()
 endif()
 

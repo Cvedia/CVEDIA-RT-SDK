@@ -4,12 +4,11 @@
 	SPDX-License-Identifier: LicenseRef-CVEDIA
 */
 #pragma once
-#include "defines.h"
-
 #include <shared_mutex>
 #include <mutex>
 
 #include "cvaluefwd.h"
+#include "defines.h"
 #include "rterror.h"
 #include "builtin/basetypes.h"
 

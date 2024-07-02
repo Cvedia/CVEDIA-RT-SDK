@@ -34,7 +34,6 @@ namespace cvedia {
 				EXPORT std::shared_lock<shared_mutex_class> getReadLock();
 				EXPORT uCVDictRoot getCVDict();
 				EXPORT uCVDictRoot getCVDict(std::string const& path);
-				EXPORT void clear();
 			};
 		}
 	}

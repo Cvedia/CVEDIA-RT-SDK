@@ -2,7 +2,6 @@
 %include <typemaps.i>
 
 %apply int *OUTPUT { int* }
-%apply float *OUTPUT { float* }
 %apply float INPUT[] { float* coords }
 %apply double INPUT[] { double* color }
 %apply int INPUT[] { int* classes }
@@ -18,13 +17,13 @@
     if (tempStringPtr == IntPtr.Zero) return null;
 
     string result = Marshal.PtrToStringAnsi(tempStringPtr);
-    Core.FreeString(tempStringPtr);
+    Securt.FreeString(tempStringPtr);
     return result;
 }
 
 %typemap(csin, 
 pre="    IntPtr tmp_$csinput = IntPtr.Zero;",
-post="      $csinput = Marshal.PtrToStringAnsi(tmp_$csinput);\n      Core.FreeString(tmp_$csinput);") char **OUTPUT "out tmp_$csinput"
+post="      $csinput = Marshal.PtrToStringAnsi(tmp_$csinput);\n      Securt.FreeString(tmp_$csinput);") char **OUTPUT "out tmp_$csinput"
 
 %typemap(cstype) char **OUTPUT "out string"
 %typemap(imtype) char **OUTPUT "out IntPtr"

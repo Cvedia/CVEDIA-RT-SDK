@@ -5,7 +5,8 @@ file(GLOB_RECURSE REST_SRCS "src/rest/*.cpp")
 endif()
 
 # Add source to this project's executable.
-add_library(securt SHARED ${REST_SRCS} "src/securt/securt_capi.cpp" "src/common/functions.cpp"  "src/common/context.cpp" "src/core/core_capi.cpp" "src/core/core_sse_api.cpp")
+add_library(securt SHARED ${REST_SRCS} "src/securt/securt.cpp" "src/securt/securt_capi.cpp" "src/common/solution_manager.cpp" "src/common/analytics_manager.cpp" 
+    "src/common/functions.cpp" "src/common/discovery.cpp" "src/securt/securt_sse_api.cpp")
 
 set_target_properties(securt 
                         PROPERTIES 
@@ -23,7 +24,6 @@ else()
 target_include_directories(securt
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/../../include/sdk/
-    $<TARGET_PROPERTY:TracyClient,INCLUDE_DIRECTORIES>
 )
 endif()
 

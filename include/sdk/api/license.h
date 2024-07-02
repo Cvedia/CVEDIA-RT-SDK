@@ -33,7 +33,6 @@ namespace cvedia {
 				EXPORT expected<void> loadLicenses();
 				EXPORT expected<void> unloadLicenses();
 				EXPORT expected<bool> activateTrialLicense();
-				EXPORT expected<std::string> activateAndRetrieveTrialLicense();
 			}
 		}
 	}

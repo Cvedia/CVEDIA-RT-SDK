@@ -166,7 +166,7 @@ pplx::task<std::shared_ptr<SecurtCreateLineCrossingV1_201_response>> SecuRTLines
     if(localVarResponseHttpContentType == utility::conversions::to_string_t("application/json"))
     {
     if (localVarResponse.empty()) {
-    return localVarResult;
+        return localVarResult;
     }
     web::json::value localVarJson = web::json::value::parse(localVarResponse);
 
@@ -304,7 +304,6 @@ pplx::task<void> SecuRTLinesApi::securtCreateLineCrossingWithIdV1(utility::strin
     })
     .then([=](utility::string_t localVarResponse)
     {
-    (void)localVarResponse;
     return void();
     });
     }
@@ -409,7 +408,6 @@ pplx::task<void> SecuRTLinesApi::securtDeleteAllLinesV1(utility::string_t instan
     })
     .then([=](utility::string_t localVarResponse)
     {
-    (void)localVarResponse;
     return void();
     });
     }
@@ -515,7 +513,6 @@ pplx::task<void> SecuRTLinesApi::securtDeleteLineV1(utility::string_t instanceId
     })
     .then([=](utility::string_t localVarResponse)
     {
-    (void)localVarResponse;
     return void();
     });
     }
@@ -626,7 +623,7 @@ pplx::task<std::shared_ptr<SecurtGetLinesV1_200_response>> SecuRTLinesApi::secur
     if(localVarResponseHttpContentType == utility::conversions::to_string_t("application/json"))
     {
     if (localVarResponse.empty()) {
-    return localVarResult;
+        return localVarResult;
     }
     web::json::value localVarJson = web::json::value::parse(localVarResponse);
 

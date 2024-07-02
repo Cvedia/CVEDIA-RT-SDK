@@ -10,19 +10,3 @@
 #define EXPORT
 #pragma warning Unknown dynamic link import/export semantics.
 #endif
-
-#define RT_C_TRY(var, expr) \
-	auto &&UNIQUE_NAME(tmp) = expr; \
-	if (!UNIQUE_NAME(tmp)) { \
-		return -1; \
-	} \
-	var = std::move(UNIQUE_NAME(tmp).value())
-
-#define RT_C_TRY_STR(var, expr) \
-	auto &&UNIQUE_NAME(tmp) = expr; \
-	if (!UNIQUE_NAME(tmp)) { \
-		return nullptr; \
-	} \
-	var = std::move(UNIQUE_NAME(tmp).value())
-
-#define RT_C_CATCH(expr) do { auto &&UNIQUE_NAME(tmp) = expr; if (!UNIQUE_NAME(tmp)) return -1; } while (0)

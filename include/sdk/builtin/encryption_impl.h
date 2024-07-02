@@ -32,7 +32,7 @@ using namespace cvedia::rt::internal;
 
 namespace cvedia {
 	namespace rt {
-		class EXPORT_CLASS EncryptionImpl final : public iface::Encryption {
+		class EncryptionImpl final : public iface::Encryption {
 		public:
 			EXPORT explicit EncryptionImpl(std::string const& password) noexcept;
 			[[ noreturn ]] EXPORT explicit EncryptionImpl(nlohmann::json const& j);

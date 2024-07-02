@@ -7,9 +7,6 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-#ifndef XTENSOR_USE_XSIMD
-#define XTENSOR_USE_XSIMD
-#endif
 
 #include <string>
 #include "rtconfig.h"
@@ -34,8 +31,6 @@ using ssize_t = int;
 #define TIME_IN_MS std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
 #define TIME_IN_US std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
 #define TIME_IN_S std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()
-
-#define __LOCATION__ std::string(__FILE__) + ":" + std::to_string(__LINE__)
 
 template<typename T> struct argument_type;
 template<typename T, typename U> struct argument_type<T(U)> { typedef U type; };

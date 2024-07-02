@@ -5,8 +5,6 @@
 */
 #pragma once
 
-#include "defines.h"
-
 #include "interface/cvdict.h"
 #include "interface/module.h"
 #include "rterror.h"
@@ -14,25 +12,21 @@
 #define getConfigWithReadLock(varname) \
 	RT_TRY(uCVDictRoot UNIQUE_NAME(cvdict), getConfigDict()); \
 	auto UNIQUE_NAME(lck) = UNIQUE_NAME(cvdict)->getReadLock(); \
-	/*{ auto & t = *UNIQUE_NAME(lck).mutex(); LockMark(t); }*/ \
 	auto const varname = UNIQUE_NAME(cvdict)->getNodeUnsafe() \
 
 #define getConfigWithWriteLock(varname) \
 	RT_TRY(uCVDictRoot UNIQUE_NAME(cvdict), getConfigDict()); \
 	auto UNIQUE_NAME(lck) = UNIQUE_NAME(cvdict)->getWriteLock(); \
-	/*{ auto & t = *UNIQUE_NAME(lck).mutex(); LockMark(t); }*/ \
 	auto const varname = UNIQUE_NAME(cvdict)->getNodeUnsafe() \
 
 #define getStateWithReadLock(varname) \
 	RT_TRY(uCVDictRoot UNIQUE_NAME(cvdict), getStateDict()); \
 	auto UNIQUE_NAME(lck) = UNIQUE_NAME(cvdict)->getReadLock(); \
-	/*{ auto & t = *UNIQUE_NAME(lck).mutex(); LockMark(t); }*/ \
 	auto const varname = UNIQUE_NAME(cvdict)->getNodeUnsafe() \
 
 #define getStateWithWriteLock(varname) \
 	RT_TRY(uCVDictRoot UNIQUE_NAME(cvdict), getStateDict()); \
 	auto UNIQUE_NAME(lck) = UNIQUE_NAME(cvdict)->getWriteLock(); \
-	/*{ auto & t = *UNIQUE_NAME(lck).mutex(); LockMark(t); }*/ \
 	auto const varname = UNIQUE_NAME(cvdict)->getNodeUnsafe() \
 
 // Get the State and Config dictionaries and lock them respectively for Write, Write
@@ -42,8 +36,6 @@
 	auto UNIQUE_NAME(lck1) = UNIQUE_NAME(cvstate)->getWriteLockDefer(); \
 	auto UNIQUE_NAME(lck2) = UNIQUE_NAME(cvconf)->getWriteLockDefer(); \
 	std::lock(UNIQUE_NAME(lck1), UNIQUE_NAME(lck2)); \
-	/*{ auto & t = *UNIQUE_NAME(lck1).mutex(); LockMark(t); } \
-	{ auto & t = *UNIQUE_NAME(lck2).mutex(); LockMark(t); } */ \
 	auto const state = UNIQUE_NAME(cvstate)->getNodeUnsafe(); \
 	auto const config = UNIQUE_NAME(cvconf)->getNodeUnsafe() \
 
@@ -54,8 +46,6 @@
 	auto UNIQUE_NAME(lck1) = UNIQUE_NAME(cvstate)->getReadLockDefer(); \
 	auto UNIQUE_NAME(lck2) = UNIQUE_NAME(cvconf)->getWriteLockDefer(); \
 	std::lock(UNIQUE_NAME(lck1), UNIQUE_NAME(lck2)); \
-	/*{ auto & t = *UNIQUE_NAME(lck1).mutex(); LockMark(t); } \
-	{ auto & t = *UNIQUE_NAME(lck2).mutex(); LockMark(t); } */ \
 	auto const state = UNIQUE_NAME(cvstate)->getNodeUnsafe(); \
 	auto const config = UNIQUE_NAME(cvconf)->getNodeUnsafe() \
 
@@ -66,8 +56,6 @@
 	auto UNIQUE_NAME(lck1) = UNIQUE_NAME(cvstate)->getWriteLockDefer(); \
 	auto UNIQUE_NAME(lck2) = UNIQUE_NAME(cvconf)->getReadLockDefer(); \
 	std::lock(UNIQUE_NAME(lck1), UNIQUE_NAME(lck2)); \
-	/*{ auto & t = *UNIQUE_NAME(lck1).mutex(); LockMark(t); } \
-	{ auto & t = *UNIQUE_NAME(lck2).mutex(); LockMark(t); } */ \
 	auto const state = UNIQUE_NAME(cvstate)->getNodeUnsafe(); \
 	auto const config = UNIQUE_NAME(cvconf)->getNodeUnsafe() \
 
@@ -78,8 +66,6 @@
 	auto UNIQUE_NAME(lck1) = UNIQUE_NAME(cvstate)->getReadLockDefer(); \
 	auto UNIQUE_NAME(lck2) = UNIQUE_NAME(cvconf)->getReadLockDefer(); \
 	std::lock(UNIQUE_NAME(lck1), UNIQUE_NAME(lck2)); \
-	/*{ auto & t = *UNIQUE_NAME(lck1).mutex(); LockMark(t); } \
-	{ auto & t = *UNIQUE_NAME(lck2).mutex(); LockMark(t); } */ \
 	auto const state = UNIQUE_NAME(cvstate)->getNodeUnsafe(); \
 	auto const config = UNIQUE_NAME(cvconf)->getNodeUnsafe() \
 
@@ -95,7 +81,6 @@ namespace cvedia {
 			class InferenceHandler;
 			class Instance;
 			class Module;
-			class SolutionManager;
 		}
 
 		class PluginState;
@@ -133,10 +118,9 @@ namespace cvedia {
 #endif
 
 			using createInferenceHandler = std::function<std::shared_ptr<iface::InferenceHandler>(std::string const& moduleName)>;
-			using createInputHandler = std::function<std::unique_ptr<iface::InputHandler>(std::string const& moduleName)>;
+			using createInputHandler = std::function<std::shared_ptr<iface::InputHandler>(std::string const& moduleName)>;
 			using createOutputHandler = std::function<std::shared_ptr<iface::OutputHandler>(std::string const& moduleName, std::string const& schema, std::string const& sink, std::string const& path, pCValue config)>;
 			using createVideoDecoderHandler = std::function<std::unique_ptr<iface::VideoDecoder>(std::string const& deviceId, Codec const& codec)>;
-			using createSolutionManagerHandler = std::function<std::shared_ptr<iface::SolutionManager>()>;
 
 			using uiHandler = std::function<pCValue(std::string const& eventName, pCValue const& input)>;
 
@@ -187,8 +171,8 @@ namespace cvedia {
 
 			EXPORT expected<void> setConfig(pCValue const& conf) const override;
 			EXPORT std::string getRootNode() const override;
-
-			std::shared_mutex pluginMut_;
+			
+			mutable shared_mutex_class pluginMut_;
 		private:
 			std::string moduleName_;
 

@@ -10,9 +10,9 @@
  * Do not edit the class manually.
  */
 
-#include "rt_rest_client/ApiClient.h"
-#include "rt_rest_client/MultipartFormData.h"
-#include "rt_rest_client/ModelBase.h"
+#include "securt_rest_client/ApiClient.h"
+#include "securt_rest_client/MultipartFormData.h"
+#include "securt_rest_client/ModelBase.h"
 
 #include <sstream>
 #include <limits>

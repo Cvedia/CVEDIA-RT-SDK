@@ -22,10 +22,9 @@ namespace cvedia {
 			    NODISCARD EXPORT expected<std::shared_ptr<iface::Solution>> addExistingSolution(std::string const& basePath);
 				NODISCARD EXPORT expected<void> removeSolutionById(std::string const& id);
 				NODISCARD EXPORT expected<std::shared_ptr<iface::Solution>> getSolutionById(std::string const& id);
-				EXPORT bool solutionExists(std::string const& id);
 
 				NODISCARD EXPORT expected<int> discoverSolutions(std::string const& root, bool scanInstances = true);
-				NODISCARD EXPORT expected<void> removeAllSolutions();
+				EXPORT void removeAllSolutions();
 
 				NODISCARD EXPORT std::string getRootPath();
 

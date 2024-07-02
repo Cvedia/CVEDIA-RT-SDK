@@ -18,11 +18,11 @@ namespace cvedia {
 				/**
 				* Module API
 				*/
-				virtual expected<void> pushRawFrame(cbuffer image, cmap const& metadata) = 0;
-				virtual expected<void> pushRawFrame(void const* buffer, int width, int height, std::chrono::milliseconds timestamp, cmap const& metadata) = 0;
-				virtual expected<void> pushCompressedFrame(unsigned char const* data, size_t dataSize, std::chrono::milliseconds timestamp) = 0;
-				virtual expected<void> pushH264Frame(unsigned char const* data, size_t dataSize, std::chrono::milliseconds timestamp) = 0;
-				virtual expected<void> pushH265Frame(unsigned char const* data, size_t dataSize, std::chrono::milliseconds timestamp) = 0;
+				virtual expected<void> writeData(cbuffer image, cmap const& metadata) = 0;
+				virtual expected<void> writeData(void const* buffer, int width, int height, std::chrono::milliseconds timestamp, cmap const& metadata) = 0;
+				
+				virtual expected<void> writeH264VideoFrame(unsigned char const* data, size_t dataSize, std::chrono::milliseconds timestamp) = 0;
+				virtual expected<void> writeH265VideoFrame(unsigned char const* data, size_t dataSize, std::chrono::milliseconds timestamp) = 0;
 				
 				virtual int getQueueSize() = 0;
 			};

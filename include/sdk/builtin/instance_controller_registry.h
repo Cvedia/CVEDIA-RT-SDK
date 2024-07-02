@@ -25,16 +25,14 @@ namespace cvedia {
 		class InstanceControllerRegistry
 		{
 		public:
-			~InstanceControllerRegistry();
-
-			NODISCARD EXPORT static expected<void> deleteAllControllers();
+			EXPORT static void clear();
 			NODISCARD EXPORT static expected<void> discoverInstances();
 
 			NODISCARD EXPORT static expected<std::shared_ptr<iface::InstanceController>> createInstanceControllerFromExternalFile(std::string const& configFile);
 			NODISCARD EXPORT static expected<std::shared_ptr<iface::InstanceController>> createInstanceControllerFromFile(std::string const& configFile);
 			NODISCARD EXPORT static expected<std::shared_ptr<iface::InstanceController>> createInstanceControllerFromMemory(pCValue const& config);
 			NODISCARD EXPORT static expected<std::shared_ptr<iface::InstanceController>> createInstanceControllerFromMemory(std::string const& solutionId, pCValue const& config);
-
+			
 			NODISCARD EXPORT static expected<std::shared_ptr<iface::InstanceController>> getInstanceController(Uuid const& instanceId);
 			NODISCARD EXPORT static expected<void> deleteInstanceController(Uuid const& instanceId);
 			NODISCARD EXPORT static expected<void> remapUuid(Uuid const& oldId, Uuid const& newId);
@@ -52,7 +50,6 @@ namespace cvedia {
 
 			NODISCARD EXPORT static expected<void> startAllInstances(std::string const& groupFilter = "*");
 			NODISCARD EXPORT static expected<void> stopAllInstances(std::string const& groupFilter = "*");
-			NODISCARD EXPORT static expected<void> stopInstance(Uuid const& instanceId);
 
 			EXPORT static bool hasInstanceController(Uuid const& instanceId);
 		private:

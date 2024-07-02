@@ -20,7 +20,6 @@ target_include_directories(postclassifier
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../include/sdk/
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        $<TARGET_PROPERTY:TracyClient,INCLUDE_DIRECTORIES>
 )
 
 target_link_libraries (postclassifier PUBLIC ${RTCORELib} plog)

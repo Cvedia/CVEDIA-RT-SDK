@@ -4,10 +4,10 @@
 	SPDX-License-Identifier: LicenseRef-CVEDIA
 */
 #pragma once
-#include "defines.h"
-
-#include <shared_mutex>
 #include <mutex>
+#include <shared_mutex>
+
+#include "defines.h"
 
 namespace cvedia {
 	namespace rt {
@@ -28,7 +28,7 @@ namespace cvedia {
 			EXPORT std::shared_lock<shared_mutex_class> getReadLockDefer() const;
 			EXPORT shared_mutex_class& getMutex() const;
 		private:
-			mutable shared_mutex_inst(mutex_);
+			mutable shared_mutex_class mutex_;
 		};
 	}
 }

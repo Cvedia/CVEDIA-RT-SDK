@@ -46,8 +46,8 @@ namespace cvedia {
 
 				NODISCARD virtual expected<void> initialize() = 0;
 
-				NODISCARD virtual expected<void> linkInstance(std::weak_ptr<iface::Instance> instance) = 0;
-				NODISCARD virtual expected<void> unlinkInstance(std::weak_ptr<iface::Instance> instance) = 0;
+				NODISCARD virtual expected<void> linkInstance(std::shared_ptr<iface::Instance> instance) = 0;
+				NODISCARD virtual expected<void> unlinkInstance(std::shared_ptr<iface::Instance> instance) = 0;
 				NODISCARD virtual std::unordered_set<Uuid> getLinkedInstances() = 0;
 				virtual void clearLinkedInstances() = 0;
 

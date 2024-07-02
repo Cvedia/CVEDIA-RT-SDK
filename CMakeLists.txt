@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.2)
 
 project ("CVEDIART")
 
@@ -54,7 +54,7 @@ message(STATUS "RTCORELib: ${RTCORELib}")
 message("${Yellow}Configuring nlohmann::json${ColorReset}")
 FetchContent_Declare(json 
     DOWNLOAD_EXTRACT_TIMESTAMP OFF
-    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
 )
 FetchContent_MakeAvailable(json)
 
@@ -62,14 +62,14 @@ message("${Yellow}Configuring plog${ColorReset}")
 FetchContent_Declare(plog 
     DOWNLOAD_EXTRACT_TIMESTAMP OFF
     GIT_REPOSITORY https://github.com/SergiusTheBest/plog
-    GIT_TAG 1.1.10
+    GIT_TAG 1.1.9
 )
 FetchContent_MakeAvailableNoInstall(plog)
 
 message("${Yellow}Configuring XTL${ColorReset}")
 FetchContent_Declare(xtl
     GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
-    GIT_TAG 0.7.5
+    GIT_TAG master
     OVERRIDE_FIND_PACKAGE
 )
 FetchContent_MakeAvailableNoInstall(xtl)
@@ -79,20 +79,17 @@ set(EXTERNAL_LIBS ${EXTERNAL_LIBS} xtl)
 message("${Yellow}Configuring XSIMD${ColorReset}")
 FetchContent_Declare(xsimd
     GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
-    GIT_TAG 13.0.0
+    GIT_TAG master
     OVERRIDE_FIND_PACKAGE
 )
 FetchContent_MakeAvailableNoInstall(xsimd)
 set(EXTERNAL_LIBS ${EXTERNAL_LIBS} xsimd)
 
-add_definitions("-DXTENSOR_USE_XSIMD=1")
-
 # Download and configure xtensor
 message("${Yellow}Configuring XTensor${ColorReset}")
-set(XTENSOR_USE_XSIMD ON CACHE BOOL "")
 FetchContent_Declare(xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG 0.25.0
+    GIT_TAG master
     OVERRIDE_FIND_PACKAGE
 )
 FetchContent_MakeAvailableNoInstall(xtensor)
@@ -115,20 +112,6 @@ endif()
 get_target_property(HTTPLIB_INCLUDE_DIRS httplib::httplib INTERFACE_INCLUDE_DIRECTORIES)
 
 set(EXTERNAL_LIBS ${EXTERNAL_LIBS} httplib::httplib)
-
-message("${Yellow}Configuring TracyProfiler${ColorReset}")
-set(TRACY_STATIC ON CACHE BOOL "")
-FetchContent_Declare(tracy 
-    DOWNLOAD_EXTRACT_TIMESTAMP OFF
-    GIT_REPOSITORY https://github.com/wolfpld/tracy
-    GIT_TAG v0.10
-)
-FetchContent_MakeAvailableNoInstall(tracy)
-if (NOT WIN32)
-    target_compile_options(TracyClient PRIVATE -fPIC -DTRACY_EXPORTS)
-else()
-    target_compile_options(TracyClient PRIVATE -DTRACY_EXPORTS )
-endif()
 
 if (WITH_SECURT_REST_CLIENT)
 # Configure cpprestsdk
@@ -198,12 +181,7 @@ if (MSVC)
     if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
         add_compile_options(/MP)
 	else()
-        if(ENABLE_CODE_COVERAGE)
-            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
-            SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage")
-        else()
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weverything -Wno-c++98-compat-pedantic -Wno-conversion -Wno-exit-time-destructors -Wno-documentation")
-        endif()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weverything -Wno-c++98-compat-pedantic -Wno-conversion -Wno-exit-time-destructors -Wno-documentation")
     endif()
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all -Wstack-protector --param ssp-buffer-size=4 -Wformat-security -Wextra -Wno-missing-braces -ftemplate-depth=2000")
@@ -219,8 +197,8 @@ else()
     endif ()
 
     if(ENABLE_CODE_COVERAGE)
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
-        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
     elseif(${CMAKE_BUILD_TYPE} STREQUAL "Release")
         message(STATUS "Using Release CXX flags")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g0 -O3 -s")

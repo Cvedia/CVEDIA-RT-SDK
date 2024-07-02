@@ -12,7 +12,7 @@
 
 
 
-#include "rt_rest_client/model/SecurtSetOutputHlsV1_200_response.h"
+#include "securt_rest_client/model/SecurtSetOutputHlsV1_200_response.h"
 
 namespace cvedia {
 namespace rt {

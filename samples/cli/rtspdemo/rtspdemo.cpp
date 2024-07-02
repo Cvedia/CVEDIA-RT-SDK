@@ -4,16 +4,13 @@
 	SPDX-License-Identifier: Apache-2.0
 */
 #include <iostream>
-#include <thread>
-
 #include "api/logging.h"
 
-#include "interface/securt.h"
-#include "interface/instance_controller.h"
+#include "securt/securt.h"
+#include "common/solution_manager.h"
 #include "api/system.h"
 #include "api/rt.h"
 #include "api/solutions.h"
-#include "api/instances.h"
 #include "builtin/functions.h"
 
 #include "argparse/argparse.hpp"
@@ -23,7 +20,7 @@ using namespace iface;
 
 bool startInstance(std::string const& input);
 
-std::map<std::string, std::shared_ptr<iface::InstanceController>> instances;
+std::map<std::string, std::shared_ptr<solution::SecuRT>> instances;
 
 int main(int argc, const char* argv[]) {
 
@@ -66,33 +63,23 @@ int main(int argc, const char* argv[]) {
 
 bool startInstance(std::string const& input) {
 
-	if (auto mgr = api::instances::createInstanceControllerFromMemory(Uuid::randomUuid(), "securt").value_or(nullptr))
-	{
-		auto srt = std::dynamic_pointer_cast<iface::InstanceController>(mgr);
-		instances[input] = srt;
+	instances[input] = std::make_shared<solution::SecuRT>();
+	auto inst = instances[input];
 
-		auto inst = instances[input];
+	inst->start();
+	inst->setFrameRateLimit(10);
+	inst->setInputToRtsp(input);
 
-		inst->startInstance();
-		if (auto resp = inst->getSolutionManager()) {
-			auto sm = std::dynamic_pointer_cast<iface::SecuRT>(resp.value());
-			if (sm) {
-				sm->setFrameRateLimit(10);
-				sm->setInputToRtsp(input);
+	// fullscreen area (relative)
+	std::vector<Point2f> area = {
+		Point2f(0.0f, 0.0f),
+		Point2f(1.0f, 0.0f),
+		Point2f(1.0f, 1.0f),
+		Point2f(0.0f, 1.0f)
+	};
 
-				// fullscreen area (relative)
-				std::vector<Point2f> area = {
-					Point2f(0.0f, 0.0f),
-					Point2f(1.0f, 0.0f),
-					Point2f(1.0f, 1.0f),
-					Point2f(0.0f, 1.0f)
-				};
+//	inst->enableVehicleClassification();
+	inst->createLoiteringArea("area1", "area1", area, { solution::SecuRT::Classes::Person, solution::SecuRT::Classes::Vehicle }, 1, {0,0,0,0});
 
-				//	inst->enableVehicleClassification();
-				return sm->createLoiteringArea("area1", "area1", area, { iface::SecuRT::Classes::Person, iface::SecuRT::Classes::Vehicle }, 1, { 0,0,0,0 });
-			}
-		}
-	}
-
-	return false;
+	return true;
 }

@@ -327,12 +327,12 @@ bool ModelBase::fromHttpContent( std::shared_ptr<HttpContent> val,  std::shared_
     return fromString(str, outVal);
 }
 template <typename T>
-bool ModelBase::fromHttpContent( std::shared_ptr<HttpContent>, std::vector<T> & )
+bool ModelBase::fromHttpContent( std::shared_ptr<HttpContent> val, std::vector<T> & )
 {
     return true;
 }
 template <typename T>
-bool ModelBase::fromHttpContent( std::shared_ptr<HttpContent>, std::map<utility::string_t, T> & )
+bool ModelBase::fromHttpContent( std::shared_ptr<HttpContent> val, std::map<utility::string_t, T> & )
 {
     return true;
 }

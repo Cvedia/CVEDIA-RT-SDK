@@ -36,8 +36,6 @@ namespace cvedia {
 				const std::string LICENSE_HOME = "/licensing/home_dir";
 				const std::string LICENSE_URL = "/licensing/url";
 
-				EXPORT void reset();
-
 				NODISCARD EXPORT expected<void> loadJsonFromDisk(std::string const& jsonFile);
 				NODISCARD EXPORT expected<void> loadFromJsonString(std::string const& data);
 				NODISCARD EXPORT expected<void> saveToDiskAsJson(std::string const& path);
@@ -56,11 +54,7 @@ namespace cvedia {
 				template <>
 				EXPORT expected<std::string> getValue<std::string>(std::string const& nodePath);
 				template <>
-				EXPORT expected<cmap> getValue<cmap>(std::string const& nodePath);
-				template <>
 				EXPORT expected<int> getValue<int>(std::string const& nodePath);
-				template <>
-				EXPORT expected<float> getValue<float>(std::string const& nodePath);
 				template <>
 				EXPORT expected<bool> getValue<bool>(std::string const& nodePath);
 

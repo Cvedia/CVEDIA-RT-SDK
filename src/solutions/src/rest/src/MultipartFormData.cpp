@@ -10,8 +10,8 @@
  * Do not edit the class manually.
  */
 
-#include "rt_rest_client/MultipartFormData.h"
-#include "rt_rest_client/ModelBase.h"
+#include "securt_rest_client/MultipartFormData.h"
+#include "securt_rest_client/ModelBase.h"
 
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>

@@ -9,8 +9,6 @@
 #include "defines.h"
 #include "cvaluefwd.h"
 
-#include <tracy/Tracy.hpp>
-
 namespace cvedia {
 	namespace rt {
 		namespace iface {
@@ -29,7 +27,7 @@ namespace cvedia {
 			double flushCount_ = 0;
 			bool isInput_ = false;
 			cmap data_;
-			mutable shared_mutex_inst(sinkMut_);
+			mutable shared_mutex_class sinkMut_;
 		};
 	}
 }

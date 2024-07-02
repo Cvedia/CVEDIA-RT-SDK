@@ -15,8 +15,6 @@
 #include <utility>
 #include <set>
 
-#include <tracy/Tracy.hpp>
-
 namespace cvedia { namespace rt { struct BufferInit; } }
 
 

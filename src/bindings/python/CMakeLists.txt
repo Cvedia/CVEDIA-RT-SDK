@@ -1,25 +1,8 @@
 message("${Blue}Configuring SecuRT Python API${ColorReset}")
 
-if (WIN32)
-    # RT-180: Hacks for finding Python3 on Windows with VCPKG in the middle
-    # Assumes PYTHON3_DIR has a version of python with requirements.txt installed.
-    if (NOT DEFINED PYTHON3_DIR)
-        set(PYTHON3_DIR "C:/Python312")
-    endif()
-    
-    message(STATUS "PYTHON3_DIR: ${PYTHON3_DIR}")
-
-    set(Python3_ROOT_DIR ${PYTHON3_DIR})
-    
-    set(Python3_FIND_STRATEGY LOCATION)
-    set(Python3_EXECUTABLE ${Python3_ROOT_DIR}/python)
-    set(PYTHONPATH ${Python3_EXECUTABLE})
-    set(Python3_LIBRARY_DIRS ${Python3_ROOT_DIR}/libs ${Python3_ROOT_DIR}/Lib)
-    set(Python3_INCLUDE_DIR ${Python3_ROOT_DIR}/include)
-    set(Python3_NumPy_INCLUDE_DIR ${Python3_ROOT_DIR}/Lib/site-packages/numpy/core/include)
-    
-    message(STATUS "Python3_LIBRARY_DIRS: ${Python3_LIBRARY_DIRS}")
-endif()
+# TODO: Figure out why this doesn't work on CI, it finds vcpkg python 3.11
+# but when run within local _build.bat it works with native python3 instead
+# disabled WITH_SECURT_LIB_PYTHON for the timebeing.
 
 find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 
@@ -46,12 +29,6 @@ target_include_directories(${python_wrapper_target}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-if (NOT DEFINED PYTHON_BINDINGS_INSTALL_PATH)
-    set(PYTHON_BINDINGS_INSTALL_PATH ${Python3_SITEARCH})
-endif()
-
-message(STATUS "PYTHON_BINDINGS_INSTALL_PATH: ${PYTHON_BINDINGS_INSTALL_PATH}")
-
 # Link the SWIG wrapper with the existing source files
 set_target_properties(${python_wrapper_target} PROPERTIES SWIG_USE_TARGET_INCLUDE_DIRECTORIES TRUE)
 
@@ -60,6 +37,6 @@ target_link_libraries(${python_wrapper_target} PRIVATE securt ${RTCORELib} Pytho
 
 set_target_properties(${python_wrapper_target} PROPERTIES COMPILE_WARNING_AS_ERROR FALSE)
 
-install(TARGETS ${python_wrapper_target} DESTINATION ${PYTHON_BINDINGS_INSTALL_PATH}/cvedia/)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rt.py DESTINATION ${PYTHON_BINDINGS_INSTALL_PATH}/cvedia/)
+install(TARGETS ${python_wrapper_target} DESTINATION ${Python3_SITEARCH}/cvedia/)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rt.py DESTINATION ${Python3_SITEARCH}/cvedia/)
 file(WRITE "${CMAKE_INSTALL_PREFIX}/python/scripts/bindings/__init__.py" "")

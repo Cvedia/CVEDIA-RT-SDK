@@ -164,7 +164,7 @@ namespace UnitTests
             Assert.AreNotEqual(metadataList.Count, 0);
 
             helpers.AssertNoEvents(metadataList, new List<string> { "event-area-exit" });
-            helpers.AssertEvents(metadataList, new List<string> { "event-area-enter", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-area-enter", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -177,7 +177,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", true);
-            helpers.AssertNoEvents(metadataList, new List<string> { "event-area-enter", "event-area-exit", "track", "crop" });
+            helpers.AssertNoEvents(metadataList, new List<string> { "event-area-enter", "event-area-exit", "track", "best-crop" });
         }
 
         [TestMethod]
@@ -190,7 +190,7 @@ namespace UnitTests
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", true);
             helpers.AssertNoEvents(metadataList, new List<string> { "event-area-exit" });
-            helpers.AssertEvents(metadataList, new List<string> { "event-area-enter", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-area-enter", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -203,7 +203,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
-            helpers.AssertNoEvents(metadataList, new List<string> { "event-area-enter", "event-area-exit", "track", "crop" });
+            helpers.AssertNoEvents(metadataList, new List<string> { "event-area-enter", "event-area-exit", "track", "best-crop" });
         }
 
         [TestMethod]
@@ -216,7 +216,7 @@ namespace UnitTests
 
             List<string> metadataList = helpers.PlayVideo(handle, "vehicle", false);
             helpers.AssertNoEvents(metadataList, new List<string> { "event-area-exit" });
-            helpers.AssertEvents(metadataList, new List<string> { "event-area-enter", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-area-enter", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -230,7 +230,7 @@ namespace UnitTests
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
             helpers.AssertNoEvents(metadataList, new List<string> { "event-area-enter" });
-            helpers.AssertEvents(metadataList, new List<string> { "event-area-exit", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-area-exit", "best-crop" });
             Assert.IsFalse(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -243,7 +243,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
-            helpers.AssertEvents(metadataList, new List<string> { "event-area-enter", "event-area-exit", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-area-enter", "event-area-exit", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -257,7 +257,7 @@ namespace UnitTests
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
             helpers.AssertNoEvents(metadataList, new List<string> { "event-area-exit", "event-area-enter" });
-            helpers.AssertEvents(metadataList, new List<string> { "event-intrusion", "event-intrusion-end", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-intrusion", "event-intrusion-end", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -274,7 +274,7 @@ namespace UnitTests
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
             helpers.AssertNoEvents(metadataList, new List<string> { "event-area-exit", "event-area-enter" });
-            helpers.AssertEvents(metadataList, new List<string> { "event-intrusion", "event-intrusion-end", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-intrusion", "event-intrusion-end", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -291,7 +291,7 @@ namespace UnitTests
             Assert.AreEqual(motionCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
-            helpers.AssertNoEvents(metadataList, new List<string> { "event-area-exit", "event-area-enter", "event-intrusion", "track", "crop" });
+            helpers.AssertNoEvents(metadataList, new List<string> { "event-area-exit", "event-area-enter", "event-intrusion", "track", "best-crop" });
         }
 
         [TestMethod]
@@ -303,7 +303,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
-            helpers.AssertNoEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "crop" });
+            helpers.AssertNoEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "best-crop" });
         }
 
         [TestMethod]
@@ -315,7 +315,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
-            helpers.AssertEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -328,7 +328,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", true);
-            helpers.AssertEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -341,7 +341,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "vehicle", false);
-            helpers.AssertEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -354,7 +354,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "vehicle", true);
-            helpers.AssertEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -367,7 +367,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
-            helpers.AssertNoEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "crop" });
+            helpers.AssertNoEvents(metadataList, new List<string> { "event-loitering", "event-loitering-end", "track", "best-crop" });
         }
 
         [TestMethod]
@@ -392,7 +392,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
-            helpers.AssertNoEvents(metadataList, new List<string> { "event-crowd-detection", "track", "crop" });
+            helpers.AssertNoEvents(metadataList, new List<string> { "event-crowd-detection", "track", "best-crop" });
         }
 
         [TestMethod]
@@ -404,7 +404,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
-            helpers.AssertEvents(metadataList, new List<string> { "event-line-crossing", "track", "crop" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-line-crossing", "track", "best-crop" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -421,7 +421,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
-            helpers.AssertEvents(metadataList, new List<string> { "event-line-crossing", "track", "crop", "event-area-enter", "event-area-exit" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-line-crossing", "track", "best-crop", "event-area-enter", "event-area-exit" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 
@@ -437,7 +437,7 @@ namespace UnitTests
             Assert.AreEqual(areaCreated2, 1);
 
             List<string> metadataList = helpers.PlayVideo(handle, "person", false);
-            helpers.AssertEvents(metadataList, new List<string> { "event-area-enter", "event-area-exit", "track", "crop", "event-intrusion", "event-intrusion-end" });
+            helpers.AssertEvents(metadataList, new List<string> { "event-area-enter", "event-area-exit", "track", "best-crop", "event-intrusion", "event-intrusion-end" });
             Assert.IsTrue(helpers.CheckTrackHasEvents(metadataList));
         }
 

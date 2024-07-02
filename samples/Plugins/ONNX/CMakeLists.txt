@@ -97,7 +97,6 @@ else()
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src
             ${CMAKE_CURRENT_SOURCE_DIR}/../../../include/sdk/
-            $<TARGET_PROPERTY:TracyClient,INCLUDE_DIRECTORIES>
     )
 endif()
 

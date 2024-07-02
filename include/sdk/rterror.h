@@ -120,19 +120,6 @@
 	} \
 	var = std::move(UNIQUE_NAME(tmp).value())
 
-#define RT_TRY_REST_MAP(var, expr, errcMap) \
-	auto &&UNIQUE_NAME(tmp) = expr; \
-	if (!UNIQUE_NAME(tmp)) { \
-		if (errcMap.find(UNIQUE_NAME(tmp).error()) == errcMap.end()) { \
-			LOGW << "Cannot map error " << UNIQUE_NAME(tmp).error().message() << " to an HTTP status code"; \
-			response.status = 500; \
-			return; \
-		} \
-		response.status = static_cast<int>(errcMap[UNIQUE_NAME(tmp).error()]); \
-		return; \
-	} \
-	var = std::move(UNIQUE_NAME(tmp).value())
-
 #define RT_CATCH_REST(expr, errc) \
 	auto &&UNIQUE_NAME(tmp) = expr; \
 	if (!UNIQUE_NAME(tmp)) { \
@@ -222,10 +209,6 @@ enum class RTErrc
 	FileCannotBeOpened,			 // File cannot be opened
 	NetworkError,				 // Network error (socket, connection, etc.)
 	NoServerAvailable,			 // No server available
-	InvalidChecksum,			 // Invalid checksum
-	InferenceTimedOut,			 // Inference timed out
-	ShuttingDown,				 // Shutting down
-	UnknownThread,				 // Unknown thread
 };
 
 #ifdef _WIN32

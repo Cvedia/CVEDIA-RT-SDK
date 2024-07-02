@@ -24,14 +24,20 @@
 
 #include "securt_rest_client/ApiClient.h"
 
+#include "securt_rest_client/HttpContent.h"
 #include "securt_rest_client/model/SecuRTInstanceRead.h"
 #include "securt_rest_client/model/SecuRTInstanceStats.h"
 #include "securt_rest_client/model/SecuRTInstanceWrite.h"
+#include "securt_rest_client/model/SecurtConsumeEventsV1_200_response_inner.h"
 #include "securt_rest_client/model/SecurtGetAnalyticsEntitiesV1_200_response.h"
 #include "securt_rest_client/model/SecurtPostInstanceV1_201_response.h"
 #include "securt_rest_client/model/SecurtPostInstanceV1_request.h"
-#include "securt_rest_client/model/SecurtSetExclusionAreasV1_request.h"
+#include "securt_rest_client/model/SecurtSetInputV1_request.h"
 #include "securt_rest_client/model/SecurtSetMotionAreaV1_request.h"
+#include "securt_rest_client/model/SecurtSetOutputHlsV1_200_response.h"
+#include "securt_rest_client/model/SecurtSetOutputHlsV1_request.h"
+#include "securt_rest_client/model/SecurtSetOutputRtspV1_request.h"
+#include <vector>
 #include <cpprest/details/basic_types.h>
 #include <boost/optional.hpp>
 
@@ -52,6 +58,16 @@ public:
 
     EXPORT virtual ~SecuRTApi();
 
+    /// <summary>
+    /// Get events
+    /// </summary>
+    /// <remarks>
+    /// 
+    /// </remarks>
+    /// <param name="instanceId"></param>
+    EXPORT pplx::task<std::vector<std::shared_ptr<SecurtConsumeEventsV1_200_response_inner>>> securtConsumeEventsV1(
+        utility::string_t instanceId
+    ) const;
     /// <summary>
     /// Delete an instance
     /// </summary>
@@ -115,6 +131,22 @@ public:
         boost::optional<std::shared_ptr<SecurtPostInstanceV1_request>> securtPostInstanceV1Request
     ) const;
     /// <summary>
+    /// Push frame
+    /// </summary>
+    /// <remarks>
+    /// 
+    /// </remarks>
+    /// <param name="instanceId"></param>
+    /// <param name="codecId"></param>
+    /// <param name="frame">Binary frame data</param>
+    /// <param name="timestamp">Timestamp associated with the frame.</param>
+    EXPORT pplx::task<void> securtPushFrameV1(
+        utility::string_t instanceId,
+        utility::string_t codecId,
+        std::shared_ptr<HttpContent> frame,
+        int64_t timestamp
+    ) const;
+    /// <summary>
     /// Creates or updates an instance
     /// </summary>
     /// <remarks>
@@ -127,16 +159,26 @@ public:
         boost::optional<std::shared_ptr<SecuRTInstanceWrite>> secuRTInstanceWrite
     ) const;
     /// <summary>
-    /// Set exclusion areas
+    /// Restart an instance
     /// </summary>
     /// <remarks>
     /// 
     /// </remarks>
     /// <param name="instanceId"></param>
-    /// <param name="securtSetExclusionAreasV1Request"> (optional)</param>
-    EXPORT pplx::task<void> securtSetExclusionAreasV1(
+    EXPORT pplx::task<void> securtRestartInstanceV1(
+        utility::string_t instanceId
+    ) const;
+    /// <summary>
+    /// Set input source
+    /// </summary>
+    /// <remarks>
+    /// 
+    /// </remarks>
+    /// <param name="instanceId"></param>
+    /// <param name="securtSetInputV1Request"> (optional)</param>
+    EXPORT pplx::task<void> securtSetInputV1(
         utility::string_t instanceId,
-        boost::optional<std::shared_ptr<SecurtSetExclusionAreasV1_request>> securtSetExclusionAreasV1Request
+        boost::optional<std::shared_ptr<SecurtSetInputV1_request>> securtSetInputV1Request
     ) const;
     /// <summary>
     /// Set motion area
@@ -149,6 +191,50 @@ public:
     EXPORT pplx::task<void> securtSetMotionAreaV1(
         utility::string_t instanceId,
         std::shared_ptr<SecurtSetMotionAreaV1_request> securtSetMotionAreaV1Request
+    ) const;
+    /// <summary>
+    /// Configure HLS output
+    /// </summary>
+    /// <remarks>
+    /// 
+    /// </remarks>
+    /// <param name="instanceId"></param>
+    /// <param name="securtSetOutputHlsV1Request"> (optional)</param>
+    EXPORT pplx::task<std::shared_ptr<SecurtSetOutputHlsV1_200_response>> securtSetOutputHlsV1(
+        utility::string_t instanceId,
+        boost::optional<std::shared_ptr<SecurtSetOutputHlsV1_request>> securtSetOutputHlsV1Request
+    ) const;
+    /// <summary>
+    /// Configure RTSP output
+    /// </summary>
+    /// <remarks>
+    /// 
+    /// </remarks>
+    /// <param name="instanceId"></param>
+    /// <param name="securtSetOutputRtspV1Request"> (optional)</param>
+    EXPORT pplx::task<void> securtSetOutputRtspV1(
+        utility::string_t instanceId,
+        boost::optional<std::shared_ptr<SecurtSetOutputRtspV1_request>> securtSetOutputRtspV1Request
+    ) const;
+    /// <summary>
+    /// Start an instance
+    /// </summary>
+    /// <remarks>
+    /// This endpoint initiates a specified SecuRT instance, transitioning it to a running state. Once activated,the instance connects to its designated camera source or awaits incoming video frames. Simultaneously, the system begins executing heuristics, processing video data to generate pertinent metadata. Users should provide the &#x60;instanceId&#x60; in the URL path to identify which instance needs to be started.
+    /// </remarks>
+    /// <param name="instanceId">The unique identifier for the Securt instance that needs to be started.</param>
+    EXPORT pplx::task<void> securtStartInstanceV1(
+        utility::string_t instanceId
+    ) const;
+    /// <summary>
+    /// Stop an instance
+    /// </summary>
+    /// <remarks>
+    /// This endpoint facilitates the halting of a specified Securt instance. On invocation, the instance disconnects from its camera source, ceases the intake of video frames, and suspends all running heuristics, ensuring no further metadata generation occurs. The &#x60;instanceId&#x60; provided in the URL path designates the instance to be stopped.
+    /// </remarks>
+    /// <param name="instanceId">The unique identifier for the Securt instance that needs to be halted.</param>
+    EXPORT pplx::task<void> securtStopInstanceV1(
+        utility::string_t instanceId
     ) const;
 
 protected:

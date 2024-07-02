@@ -33,6 +33,9 @@ namespace cvedia {
 
 				virtual expected<void> setPoolSize(int poolSize) = 0;
 
+				virtual expected<std::pair<cbuffer, std::vector<Rect2f>>> packJobs(cvec const& jobs) = 0;
+				virtual expected<std::pair<cbuffer, std::vector<Rect2f>>> packJobs(cvec const& jobs, int width, int height) = 0;
+
 //				virtual pCValue getBackendConfig() = 0;
 				virtual void setBackendConfig(pCValue conf) = 0;
 

@@ -1,39 +1,96 @@
-#include "rtconfig.h"
-
-#include "common/context.h"
-#include "common/functions.h"
-#include "core/core_capi.h"
 
 #include "securt/securt_capi.h"
-#include "interface/securt.h"
-#include "builtin/discovery.h"
+#include "securt/securt_sse_api.h"
+#include "common/analytics_manager.h"
+#include "securt/securt.h"
+#include "common/discovery.h"
 #include "api/logging.h"
 #include "api/instances.h"
-#include "builtin/analytics_manager.h"
 
 #include <httplib.h>
 
+#if WITH_SECURT_REST_CLIENT
+#include <securt_rest_client/ApiConfiguration.h>
+#include <securt_rest_client/ApiClient.h>
+#include <securt_rest_client/api/SecuRTApi.h>
+#include <securt_rest_client/api/SecuRTAreasApi.h>
+#include <securt_rest_client/api/SecuRTLinesApi.h>
+#endif
+
 #include <array>
+#include <cstring>
 #include <nlohmann/json.hpp>
 
 #include "cvalue.h"
+#include "rtconfig.h"
 #include "api/convert.h"
 #include "api/thread.h"
 #include "builtin/functions.h"
-#include "core/core_capi.h"
 #include "interface/instance.h"
 #include "interface/instance_controller.h"
 #include "interface/solution.h"
 
-#if WITH_SECURT_REST_CLIENT
-#include <rt_rest_client/ApiConfiguration.h>
-#include <rt_rest_client/ApiClient.h>
-#include <rt_rest_client/api/SecuRTApi.h>
-#include <rt_rest_client/api/SecuRTAreasApi.h>
-#include <rt_rest_client/api/SecuRTLinesApi.h>
-#endif
+using ConnectionData = struct
+{
+	std::string ip;
 
-#include <plog/Init.h>
+#if WITH_SECURT_REST_CLIENT
+	std::shared_ptr<cvedia::rt::rest::client::ApiConfiguration> apiConfig;
+	std::shared_ptr<cvedia::rt::rest::client::ApiClient> apiClient;
+	std::shared_ptr<cvedia::rt::rest::client::SecuRTApi> secuRTApi;
+	std::shared_ptr<cvedia::rt::rest::client::SecuRTAreasApi> secuRTAreasApi;
+	std::shared_ptr<cvedia::rt::rest::client::SecuRTLinesApi> secuRTLinesApi;
+	std::unique_ptr<cvedia::rt::SecuRtSseApi> secuRtSseApi;
+#endif
+};
+
+using SecuRtContext = struct
+{
+	cvedia::rt::Uuid instanceUuid;
+	std::string remoteIp;
+
+	ConnectionData connections;
+};
+
+std::map<int, std::unique_ptr<SecuRtContext>> contextData_;
+std::mutex securtMutex;
+
+int incContextId = 1;
+
+char* copyString(std::string const& str) {
+#ifdef _WIN32
+	return _strdup(str.c_str());
+#else
+	return strdup(str.c_str());
+#endif
+}
+
+#define RT_C_TRY(var, expr) \
+	auto &&UNIQUE_NAME(tmp) = expr; \
+	if (!UNIQUE_NAME(tmp)) { \
+		return -1; \
+	} \
+	var = std::move(UNIQUE_NAME(tmp).value())
+
+#define RT_C_CATCH(expr) \
+	do { \
+	auto &&UNIQUE_NAME(tmp) = expr; \
+	if (!UNIQUE_NAME(tmp)) { \
+		return -1; \
+	} \
+	} while (0) 
+
+#define GET_CONTEXT(var, handle) \
+	if (contextData_.find(handle) == contextData_.end()) { \
+		return -1; \
+	} \
+	auto const& var = contextData_[handle]
+
+#define GET_CONTEXT_STR(var, handle) \
+	if (contextData_.find(handle) == contextData_.end()) { \
+		return nullptr; \
+	} \
+	auto const& var = contextData_[handle]
 
 #define GET_SECURT(var) \
 	auto var = getSecuRt(context->instanceUuid); \
@@ -45,16 +102,82 @@
 	if (!var) \
 		return nullptr 
 
-std::shared_ptr<cvedia::rt::iface::SecuRT> getSecuRt(cvedia::rt::Uuid const& instanceId) {
+// TODO: this is a quick & dirty implementation of a std::istream that reads from a memory buffer
+// TODO: it's used to pass frame data via CPPRestSDK. We might want to find a better way to do this?
+// TODO: there's apparently a boost implementation of this (bufferstream ?)
+
+class MemoryBuffer : public std::streambuf
+{
+public:
+	MemoryBuffer(char const* data, size_t size)
+	{
+		buffer_.resize(size);
+		std::copy_n(data, size, buffer_.begin());
+		this->setg(buffer_.data(), buffer_.data(), buffer_.data() + size);
+	}
+
+	pos_type seekoff(off_type off, std::ios_base::seekdir dir, std::ios_base::openmode /*which*/) override
+	{
+		if (dir == std::ios_base::cur)
+			gbump(static_cast<int>(off));
+		else if (dir == std::ios_base::end)
+			setg(eback(), egptr() + off, egptr());
+		else if (dir == std::ios_base::beg)
+			setg(eback(), eback() + off, egptr());
+		return gptr() - eback();
+	}
+
+	pos_type seekpos(pos_type sp, std::ios_base::openmode which) override
+	{
+		return seekoff(sp - pos_type(static_cast<off_type>(0)), std::ios_base::beg, which);
+	}
+
+private:
+	std::vector<char> buffer_;
+};
+
+class MemoryStream : public std::istream
+{
+public:
+	MemoryStream(char const* data, size_t size) : std::istream(&buffer_), buffer_(data, size)
+	{
+		rdbuf(&buffer_);
+	}
+
+private:
+	MemoryBuffer buffer_;
+};
+
+std::shared_ptr<cvedia::rt::solution::SecuRT> getSecuRt(cvedia::rt::Uuid const& instanceId) {
 	if (auto const& ctrlResp = cvedia::rt::api::instances::getInstanceController(instanceId))
 	{
 		auto const& ctrl = ctrlResp.value();
-		if (auto const& mgrResp = ctrl->getSolutionManagerOrCreate())
+
+		if (auto const& mgrResp = ctrl->getSolutionManager())
 		{
 			auto const& mgr = mgrResp.value();
-			if (auto const& securt = std::dynamic_pointer_cast<cvedia::rt::iface::SecuRT>(mgr))
+
+			if (auto const& securt = std::dynamic_pointer_cast<cvedia::rt::solution::SecuRT>(mgr))
 			{
 				return securt;
+			}
+		}
+		else
+		{
+			// there is no SolutionManager yet, so we create one
+			if (auto const& solResp = ctrl->getSolution())
+			{
+				auto solWeak = solResp.value();
+				if (auto const sol = solWeak.lock())
+				{
+					if (sol->getId() == "securt")
+					{
+						auto securt = std::make_shared<cvedia::rt::solution::SecuRT>();
+						// dont initialize because the instance is already running
+						securt->attachToInstanceController(ctrl, false);
+						return securt;
+					}
+				}
 			}
 		}
 	}
@@ -62,104 +185,260 @@ std::shared_ptr<cvedia::rt::iface::SecuRT> getSecuRt(cvedia::rt::Uuid const& ins
 	return nullptr;
 }
 
-//auto succeed = [](int a) { (void)a; return -1; };
+int securt_create_context(char const* instanceUuid, char const* remoteIp)
+{
+	std::unique_lock<std::mutex> lock(securtMutex);
+
+	auto context = std::make_unique<SecuRtContext>();
+
+	if (instanceUuid == nullptr || instanceUuid[0] == '\0')
+	{
+		context->instanceUuid = cvedia::rt::Uuid::randomUuid();
+	}
+	else
+	{
+		context->instanceUuid = cvedia::rt::Uuid(instanceUuid);
+		if (!context->instanceUuid.isValid())
+		{
+			LOGE << "Invalid instance UUID";
+			return -1;
+		}
+	}
+
+#if WITH_SECURT_REST_CLIENT
+	if (remoteIp && remoteIp[0] != '\0')
+	{
+		std::string remoteIpStr(remoteIp);
+		int port = 3546;
+		if (strchr(remoteIp, ':'))
+		{
+			auto const spl = split_str(remoteIp, ':');
+
+			port = atoi(spl[1].c_str());
+			remoteIpStr = spl[0];
+		}
+
+		context->connections.ip = std::string(remoteIpStr);
+
+		context->connections.apiConfig = std::make_shared<cvedia::rt::rest::client::ApiConfiguration>();
+		context->connections.apiConfig->setBaseUrl(utility::conversions::to_string_t("http://" + context->connections.ip + ":" + std::to_string(port)));
+
+		context->connections.apiClient = std::make_shared<cvedia::rt::rest::client::ApiClient>(context->connections.apiConfig);
+		context->connections.secuRTApi = std::make_shared<cvedia::rt::rest::client::SecuRTApi>(context->connections.apiClient);
+		context->connections.secuRTAreasApi = std::make_shared<cvedia::rt::rest::client::SecuRTAreasApi>(context->connections.apiClient);
+		context->connections.secuRTLinesApi = std::make_shared<cvedia::rt::rest::client::SecuRTLinesApi>(context->connections.apiClient);
+		context->connections.secuRtSseApi = std::make_unique<cvedia::rt::SecuRtSseApi>("http://" + context->connections.ip + ":" + std::to_string(port));
+
+		context->remoteIp = remoteIpStr;
+	}
+#else
+	(void)remoteIp;
+#endif
+
+	contextData_.insert({ incContextId, std::move(context) });
+
+	return incContextId++;
+}
+
+int securt_delete_context(int const contextHandle)
+{
+	std::unique_lock<std::mutex> lock(securtMutex);
+
+	if (contextData_.find(contextHandle) == contextData_.end())
+		return 0;
+
+	contextData_.erase(contextHandle);
+	return 1;
+}
+
+auto succeed = [](int a) { (void)a; return -1; };
 
 int securt_create_instance(int const contextHandle, char const* instanceName)
 {
-	return core_create_instance(contextHandle, instanceName, "default", "securt", 0);
+	std::unique_lock<std::mutex> lock(securtMutex);
+
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		try {
+			(void)cvedia::rt::api::thread::registerThread(cvedia::rt::ThreadType::Worker);
+
+			RT_C_TRY(auto const& ctrl, cvedia::rt::api::instances::createInstanceControllerFromMemory(context->instanceUuid, "securt"));
+
+			ctrl->setDisplayName(instanceName);
+			ctrl->loadInstance();
+
+			auto const securt = std::make_shared<cvedia::rt::solution::SecuRT>();
+
+			RT_C_CATCH(securt->attachToInstanceController(ctrl, true));
+
+			return 1;
+		}
+		catch (std::exception const&)
+		{
+			return -1;
+		}
+	}
+	else
+	{
+#if WITH_SECURT_REST_CLIENT
+		// if it's not, create a remote instance using previously established connection
+
+		try
+		{
+			auto const remoteInstanceName = utility::conversions::to_string_t(instanceName);			
+			auto const remoteInstanceId = utility::conversions::to_string_t(context->instanceUuid.toString());
+
+			auto const securtPostInstanceV1Request = std::make_shared<cvedia::rt::rest::client::model::SecurtPostInstanceV1_request>();
+			securtPostInstanceV1Request->setName(remoteInstanceName);
+			securtPostInstanceV1Request->setInstanceId(remoteInstanceId);
+
+			auto const task = context->connections.secuRTApi->securtPostInstanceV1(securtPostInstanceV1Request);
+			auto const status = task.wait();
+			if (status == pplx::task_status::completed)
+			{
+				return 1;
+			}
+			else
+			{
+				return -1;
+			}
+		}
+		catch (std::exception const&)
+		{			
+			return -1;
+		}
+#else
+		LOGE << "Remote mode is not supported in this build";
+		return -1;
+#endif
+	}
 }
 
 int securt_destroy_instance(int const contextHandle)
 {
-	return core_delete_instance(contextHandle);
-}
+	std::unique_lock<std::mutex> lock(securtMutex);
 
-bool validateBool(int value)
-{
-	if (value != 0 && value != 1)
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
 	{
-		LOGE << "Invalid boolean value " << value;
-		return false;
-	}
-	return true;
-}
+		GET_SECURT(securt);
 
-bool validateEnum(int value, int min, int max)
-{
-	return value >= min && value <= max;
-}
-
-bool validateDirection(int direction)
-{
-	if (!validateEnum(direction, 1, 3))
-	{
-		LOGE << "Invalid direction value " << direction;
-		return false;
-	}
-	return true;
-}
-
-bool validateNumberOfPoints(int numPoints)
-{
-	if (numPoints % 2 != 0)
-	{
-		LOGE << "Number of points must be a multiple of 2";
-		return false;
-	}
-	return true;
-}
-
-bool validateClasses(int const* classes, int const classesSize)
-{
-	for (int i = 0; i < classesSize; ++i)
-	{
-		if (!validateEnum(classes[i], 1, 5))
+		if (cvedia::rt::api::instances::deleteInstanceController(context->instanceUuid))
 		{
-			LOGE << "Invalid class value " << classes[i];
-			return false;
+			return 1;
+		}
+
+		return -1;
+	}
+
+#if WITH_SECURT_REST_CLIENT
+	// remote instance
+	try
+	{
+		auto const remoteInstanceId = utility::conversions::to_string_t(context->instanceUuid.toString());
+		auto const task = context->connections.secuRTApi->securtDeleteInstanceV1(remoteInstanceId);
+		auto const status = task.wait();
+		if (status == pplx::task_status::completed)
+		{						
+			return 1;
+		}
+		else
+		{
+			return -1;
+		}		
+	}
+	catch (std::exception const&e)
+	{
+		std::string const str = e.what();
+		LOGE << str;
+		return -1;
+	}
+#else
+	return -1;
+#endif
+}
+
+int securt_start(int const contextHandle)
+{
+	std::unique_lock<std::mutex> lock(securtMutex);
+
+	GET_CONTEXT(context, contextHandle);
+
+	// is it a local instance?
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+		return (securt->start() ? 1 : -1);
+	}
+
+#if WITH_SECURT_REST_CLIENT
+	// remote instance
+	try
+	{
+		auto const remoteInstanceId = utility::conversions::to_string_t(context->instanceUuid.toString());
+		auto const task = context->connections.secuRTApi->securtStartInstanceV1(remoteInstanceId);
+		auto const status = task.wait();
+		if (status == pplx::task_status::completed)
+		{
+			return 1;
+		}
+		else
+		{
+			return -1;
 		}
 	}
-	return true;
+	catch (std::exception const& ex)
+	{
+		std::string const str = ex.what();
+		LOGE << str;
+		return -1;
+	}
+#else
+	return -1;
+#endif
 }
 
-bool validateMode(int mode)
+int securt_stop(int const contextHandle)
 {
-	if (!validateEnum(mode, 1, 2))
-	{
-		LOGE << "Invalid mode value " << mode;
-		return false;
-	}
-	return true;
-}
+	std::unique_lock<std::mutex> lock(securtMutex);
 
-bool validateAreaEvent(int areaEvent)
-{
-	if (!validateEnum(areaEvent, 1, 3))
-	{
-		LOGE << "Invalid area event value " << areaEvent;
-		return false;
-	}
-	return true;
-}
+	GET_CONTEXT(context, contextHandle);
 
-bool validateSensitivity(int sensitivity)
-{
-	if (!validateEnum(sensitivity, 1, 3))
+	// is it a local instance?
+	if (context->remoteIp.empty())
 	{
-		LOGE << "Invalid sensitivity value " << sensitivity;
-		return false;
-	}
-	return true;
-}
+		GET_SECURT(securt);
+//		std::cout << securt->getConfigurationFile();
 
-bool validateModality(int modality)
-{
-	if (!validateEnum(modality, 1, 2))
-	{
-		LOGE << "Invalid modality value " << modality;
-		return false;
+		return (securt->stop() ? 1 : -1);
 	}
-	return true;
+
+#if WITH_SECURT_REST_CLIENT
+	// remote instance
+	try
+	{
+		auto const remoteInstanceId = utility::conversions::to_string_t(context->instanceUuid.toString());
+		auto const task = context->connections.secuRTApi->securtStopInstanceV1(remoteInstanceId);
+		auto const status = task.wait();
+		if (status == pplx::task_status::completed)
+		{
+			return 1;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	catch (std::exception const&)
+	{
+		return -1;
+	}
+#else
+	return -1;
+#endif
 }
 
 std::array<double, 4> to_color_array(double const* color)
@@ -219,12 +498,12 @@ std::vector<std::vector<cvedia::rt::Point2f>> coords_to_points_v2(float const* c
 	return points;
 }
 
-std::unordered_set<cvedia::rt::iface::SecuRT::Classes> classes_to_set(int const* classes, int const classesSize)
+std::unordered_set<cvedia::rt::solution::SecuRT::Classes> classes_to_set(int const* classes, int const classesSize)
 {
-	std::unordered_set<cvedia::rt::iface::SecuRT::Classes> classesSet;
+	std::unordered_set<cvedia::rt::solution::SecuRT::Classes> classesSet;
 	for (int i = 0; i < classesSize; ++i)
 	{
-		classesSet.insert(static_cast<cvedia::rt::iface::SecuRT::Classes>(classes[i]));
+		classesSet.insert(static_cast<cvedia::rt::solution::SecuRT::Classes>(classes[i]));
 	}
 	return classesSet;
 }
@@ -267,19 +546,7 @@ std::vector<std::shared_ptr<cvedia::rt::rest::client::model::Coordinate>> to_rem
 	return coordinates;
 }
 
-std::vector<std::vector<std::shared_ptr<cvedia::rt::rest::client::model::Coordinate>>> to_remote_coordinates_v2(std::vector<std::vector<cvedia::rt::Point2f>> const& points)
-{
-	std::vector<std::vector<std::shared_ptr<cvedia::rt::rest::client::model::Coordinate>>> coordinates;
-	for (auto const& p : points)
-	{
-		coordinates.push_back(to_remote_coordinates(p));
-	}
-
-	return coordinates;
-}
-
-
-std::vector<std::shared_ptr<cvedia::rt::rest::client::model::Class>> to_remote_classes(std::unordered_set<cvedia::rt::iface::SecuRT::Classes> const& classes)
+std::vector<std::shared_ptr<cvedia::rt::rest::client::model::Class>> to_remote_classes(std::unordered_set<cvedia::rt::solution::SecuRT::Classes> const& classes)
 {
 	std::vector<std::shared_ptr<cvedia::rt::rest::client::model::Class>> classesV;
 	for (auto const& c : classes)
@@ -304,8 +571,9 @@ int securt_create_crossing_area(int const contextHandle, char const* areaId, cha
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateNumberOfPoints(numPoints) || !validateClasses(classes, classesSize) || !validateAreaEvent(areaType))
+	if (numPoints % 2 != 0)
 	{
+		LOGE << "Number of points must be a multiple of 2";
 		return -1;
 	}
 
@@ -318,7 +586,7 @@ int securt_create_crossing_area(int const contextHandle, char const* areaId, cha
 		auto const classesSet = classes_to_set(classes, classesSize);
 		auto const colorArray = to_color_array(color);
 
-		return (securt->createCrossingArea(areaId, name, area, classesSet, ignoreStationaryObjects, static_cast<cvedia::rt::iface::SecuRT::AreaEvent>(areaType), colorArray) ? 1 : -1);
+		return (securt->createCrossingArea(areaId, name, area, classesSet, ignoreStationaryObjects, static_cast<cvedia::rt::solution::SecuRT::AreaEvent>(areaType), colorArray) ? 1 : -1);
 	}
 
 #if WITH_SECURT_REST_CLIENT
@@ -362,8 +630,9 @@ int securt_create_intrusion_area(int const contextHandle, char const* areaId, ch
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateNumberOfPoints(numPoints) || !validateClasses(classes, classesSize))
+	if (numPoints % 2 != 0)
 	{
+		LOGE << "Number of points must be a multiple of 2";
 		return -1;
 	}
 
@@ -415,8 +684,9 @@ int securt_create_loitering_area(int const contextHandle, char const* areaId, ch
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateNumberOfPoints(numPoints) || !validateClasses(classes, classesSize))
+	if (numPoints % 2 != 0)
 	{
+		LOGE << "Number of points must be a multiple of 2";
 		return -1;
 	}
 
@@ -470,8 +740,9 @@ int securt_create_crowding_area(int const contextHandle, char const* areaId, cha
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateNumberOfPoints(numPoints) || !validateClasses(classes, classesSize))
+	if (numPoints % 2 != 0)
 	{
+		LOGE << "Number of points must be a multiple of 2";
 		return -1;
 	}
 
@@ -527,8 +798,9 @@ int securt_create_line_crossing(int const contextHandle, char const* areaId, cha
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateNumberOfPoints(numPoints) || !validateClasses(classes, classesSize) || !validateDirection(direction))
+	if (numPoints % 2 != 0)
 	{
+		LOGE << "Number of points must be a multiple of 2";
 		return -1;
 	}
 
@@ -540,7 +812,7 @@ int securt_create_line_crossing(int const contextHandle, char const* areaId, cha
 		auto const classesSet = classes_to_set(classes, classesSize);
 		auto const colorArray = to_color_array(color);
 
-		return (securt->createLineCrossing(areaId, name, area, classesSet, static_cast<cvedia::rt::iface::SecuRT::Direction>(direction), colorArray) ? 1 : -1);
+		return (securt->createLineCrossing(areaId, name, area, classesSet, static_cast<cvedia::rt::solution::SecuRT::Direction>(direction), colorArray) ? 1 : -1);
 	}
 
 #if WITH_SECURT_REST_CLIENT
@@ -582,8 +854,9 @@ int securt_create_armed_person_area(int const contextHandle, char const* areaId,
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateNumberOfPoints(numPoints))
+	if (numPoints % 2 != 0)
 	{
+		LOGE << "Number of points must be a multiple of 2";
 		return -1;
 	}
 
@@ -599,171 +872,7 @@ int securt_create_armed_person_area(int const contextHandle, char const* areaId,
 
 #if WITH_SECURT_REST_CLIENT
 	// remote instance
-	try
-	{
-		auto const remoteInstanceId = utility::conversions::to_string_t(context->instanceUuid.toString());
-		auto const remoteAreaId = utility::conversions::to_string_t(areaId);
-
-		auto const areaArmedPersonWriteModel = std::make_shared<cvedia::rt::rest::client::model::AreaArmedPersonWrite>();
-		areaArmedPersonWriteModel->setName(utility::conversions::to_string_t(name));
-		areaArmedPersonWriteModel->setCoordinates(to_remote_coordinates(coords_to_points(coords, numPoints)));
-		areaArmedPersonWriteModel->setColor(to_color_vector(color));
-
-		auto const task = context->connections.secuRTAreasApi->securtCreateArmedPersonAreaWithIdV1(remoteInstanceId, remoteAreaId, areaArmedPersonWriteModel);
-		auto const status = task.wait();
-		if (status == pplx::task_status::completed)
-		{
-			return 1;
-		}
-		else
-		{
-			return -1;
-		}
-	}
-	catch (std::exception const&)
-	{
-		return -1;
-	}
-#else
-	return -1;
-#endif
-}
-
-int securt_create_object_left_area(int const handle, char const* areaId, char const* name, float const* coords,
-	int numPoints, int minDuration, double const* color)
-{
-	GET_CONTEXT(context, handle);
-
-	if (!validateNumberOfPoints(numPoints))
-	{
-		return -1;
-	}
-
-	if (context->remoteIp.empty())
-	{
-		GET_SECURT(securt);
-
-		auto const area = coords_to_points(coords, numPoints);
-		auto const colorArray = to_color_array(color);
-
-		return (securt->createObjectLeftArea(areaId, name, area, minDuration, colorArray) ? 1 : -1);
-	}
-
-#if WITH_SECURT_REST_CLIENT
-	// TODO
-	return -1;
-#else
-	return -1;
-#endif
-}
-
-int securt_create_object_removed_area(int const handle, char const* areaId, char const* name, float const* coords,
-	int numPoints, int minDuration, double const* color)
-{
-	GET_CONTEXT(context, handle);
-
-	if (!validateNumberOfPoints(numPoints))
-	{
-		return -1;
-	}
-
-	if (context->remoteIp.empty())
-	{
-		GET_SECURT(securt);
-
-		auto const area = coords_to_points(coords, numPoints);
-		auto const colorArray = to_color_array(color);
-
-		return (securt->createObjectRemovedArea(areaId, name, area, minDuration, colorArray) ? 1 : -1);
-	}
-
-#if WITH_SECURT_REST_CLIENT
-	// TODO
-	return -1;
-#else
-	return -1;
-#endif
-}
-
-int securt_create_tailgating_line(int const handle, char const* lineId, char const* name, float const* coords,
-	int numPoints, int const* classes, int classesSize, int maxDuration, int direction, double const* color)
-{
-	GET_CONTEXT(context, handle);
-
-	if (!validateNumberOfPoints(numPoints) || !validateClasses(classes, classesSize))
-	{
-		return -1;
-	}
-
-	if (context->remoteIp.empty())
-	{
-		GET_SECURT(securt);
-
-		auto const area = coords_to_points(coords, numPoints);
-		auto const classesSet = classes_to_set(classes, classesSize);
-		auto const colorArray = to_color_array(color);
-
-		return (securt->createTailgatingLine(lineId, name, area, classesSet, maxDuration, static_cast<cvedia::rt::iface::SecuRT::Direction>(direction), colorArray) ? 1 : -1);
-	}
-
-#if WITH_SECURT_REST_CLIENT
-	// TODO
-	return -1;
-#else
-	return -1;
-#endif
-}
-
-int securt_create_fallen_person_area(int const handle, char const* areaId, char const* name, float const* coords,
-	int numPoints, double const* color)
-{
-	GET_CONTEXT(context, handle);
-
-	if (!validateNumberOfPoints(numPoints))
-	{
-		return -1;
-	}
-
-	if (context->remoteIp.empty())
-	{
-		GET_SECURT(securt);
-
-		auto const area = coords_to_points(coords, numPoints);
-		auto const colorArray = to_color_array(color);
-
-		return (securt->createFallenPersonArea(areaId, name, area, colorArray) ? 1 : -1);
-	}
-
-	#if WITH_SECURT_REST_CLIENT
-	// TODO
-	return -1;
-#else
-	return -1;
-#endif
-}
-
-int secure_create_license_plate_access_control_area(int const handle, char const* areaId, char const* name, float const* coords,
-	int numPoints, double const* color)
-{
-	GET_CONTEXT(context, handle);
-
-	if (!validateNumberOfPoints(numPoints))
-	{
-		return -1;
-	}
-
-	if (context->remoteIp.empty())
-	{
-		GET_SECURT(securt);
-
-		auto const area = coords_to_points(coords, numPoints);
-		auto const colorArray = to_color_array(color);
-
-		return (securt->createLicensePlateAccessControlArea(areaId, name, area, colorArray) ? 1 : -1);
-	}
-
-#if WITH_SECURT_REST_CLIENT
-	// TODO
+	// TODO: implement REST API for this first
 	return -1;
 #else
 	return -1;
@@ -848,25 +957,6 @@ int securt_delete_line(int const contextHandle, char const* lineId)
 #endif
 }
 
-int securt_set_appearance_search(int const handle, int const mode)
-{
-	GET_CONTEXT(context, handle);
-
-	if (context->remoteIp.empty())
-	{
-		GET_SECURT(securt);
-
-		return securt->setAppearanceSearchMode(static_cast<cvedia::rt::iface::SecuRT::AppearanceMode>(mode)) ? 1 : -1;
-	}
-
-#if WITH_SECURT_REST_CLIENT
-	// TODO: implement REST API
-	return -1;
-#else
-	return -1;
-#endif
-}
-
 int securt_set_motion_area(int const contextHandle, float const* coords, int const numPoints)
 {
 	GET_CONTEXT(context, contextHandle);
@@ -876,7 +966,7 @@ int securt_set_motion_area(int const contextHandle, float const* coords, int con
 		GET_SECURT(securt);
 
 		auto const area = coords_to_points(coords, numPoints);
-		return securt->setMotionArea(area) ? 1 : -1;
+		return securt->setMotionArea(area);
 	}
 
 #if WITH_SECURT_REST_CLIENT
@@ -918,7 +1008,68 @@ int securt_set_exclusion_areas(int const contextHandle, float const* coords, int
 		GET_SECURT(securt);
 
 		auto const areas = coords_to_points_v2(coords, numPoints);
-		return securt->setExclusionAreas(areas) ? 1 : -1;
+		return securt->setExclusionAreas(areas);
+	}
+
+#if WITH_SECURT_REST_CLIENT
+	// remote instance
+	try
+	{
+		// TODO: implement REST API for this first
+
+		//auto const remoteInstanceId = utility::conversions::to_string_t(context->instanceUuid.toString());
+
+
+		//auto const securtSetMotionAreaV1Request = std::make_shared<cvedia::rt::rest::client::model::SecurtSetMotionAreaV1_request>();
+		//securtSetMotionAreaV1Request->setCoordinates(to_remote_coordinates(coords_to_points(coords, numPoints)));
+
+		//auto const task = context->connections.secuRTApi->securtSetMotionAreaV1(remoteInstanceId, securtSetMotionAreaV1Request);
+		//auto const status = task.wait();
+		//if (status == pplx::task_status::completed)
+		//{
+		//	return 1;
+		//}
+		//else
+		//{
+		//	return -1;
+		//}
+
+		return -1;
+	}
+	catch (std::exception const&)
+	{
+		return -1;
+	}
+#else
+	return -1;
+#endif
+}
+
+int securt_push_frame(int const contextHandle, void const* buffer, int const width, int const height, unsigned long long int const timestampMs)
+{
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+
+		return securt->pushFrame(buffer, width, height, std::chrono::milliseconds(timestampMs));
+	}
+
+	// remote instance
+	// TODO: this won't be implemented as we don't want to pass uncompressed frames to REST API
+	return -1;
+}
+
+int securt_push_h264_frame(int const contextHandle, void const* buffer, unsigned long long int const dataSize, unsigned long long int const timestampMs)
+{
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+
+		return securt->pushH264VideoFrame(static_cast<const unsigned char*>(buffer), dataSize, std::chrono::milliseconds(timestampMs));
 	}
 
 #if WITH_SECURT_REST_CLIENT
@@ -926,10 +1077,15 @@ int securt_set_exclusion_areas(int const contextHandle, float const* coords, int
 	try
 	{
 		auto const remoteInstanceId = utility::conversions::to_string_t(context->instanceUuid.toString());
-		auto const request = std::make_shared<cvedia::rt::rest::client::model::SecurtSetExclusionAreasV1_request>();
-		request->setAreas(to_remote_coordinates_v2(coords_to_points_v2(coords, numPoints)));
 
-		auto const task = context->connections.secuRTApi->securtSetExclusionAreasV1(remoteInstanceId, request);
+
+		auto const httpContent = std::make_shared<cvedia::rt::rest::client::HttpContent>();		
+		auto const iStream = std::make_shared<MemoryStream>(static_cast<char const*>(buffer), dataSize);				
+
+		httpContent->setData(iStream);
+		httpContent->setContentDisposition(utility::conversions::to_string_t("form-data"));
+
+		auto const task = context->connections.secuRTApi->securtPushFrameV1(remoteInstanceId, utility::conversions::to_string_t("h264"), httpContent, static_cast<int64_t>(timestampMs));
 		auto const status = task.wait();
 		if (status == pplx::task_status::completed)
 		{
@@ -939,6 +1095,138 @@ int securt_set_exclusion_areas(int const contextHandle, float const* coords, int
 		{
 			return -1;
 		}
+	}
+	catch (std::exception const&)
+	{
+		return -1;
+	}
+#else
+	return -1;
+#endif
+}
+
+int securt_push_h265_frame(int const contextHandle, void const* buffer, unsigned long long int const dataSize, unsigned long long int const timestampMs)
+{
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+
+		return securt->pushH265VideoFrame(static_cast<const unsigned char*>(buffer), dataSize, std::chrono::milliseconds(timestampMs));
+	}
+
+#if WITH_SECURT_REST_CLIENT
+	// remote instance
+	try
+	{
+		auto const remoteInstanceId = utility::conversions::to_string_t(context->instanceUuid.toString());
+
+
+		auto const httpContent = std::make_shared<cvedia::rt::rest::client::HttpContent>();
+		auto const iStream = std::make_shared<MemoryStream>(static_cast<char const*>(buffer), dataSize);
+
+		httpContent->setData(iStream);
+		httpContent->setContentDisposition(utility::conversions::to_string_t("form-data"));
+
+		auto const task = context->connections.secuRTApi->securtPushFrameV1(remoteInstanceId, utility::conversions::to_string_t("h265"), httpContent, static_cast<int64_t>(timestampMs));
+		auto const status = task.wait();
+		if (status == pplx::task_status::completed)
+		{
+			return 1;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	catch (std::exception const&)
+	{
+		return -1;
+	}
+#else
+	return -1;
+#endif
+}
+
+int securt_consume_events(int const contextHandle, char** outJson)
+{
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+
+		auto const eventsV = securt->consumeAllEvents();
+		if (eventsV.empty())		
+		{
+			*outJson = nullptr;		
+			return 0;
+		}
+
+		nlohmann::json json = nlohmann::json::array();
+
+		for (auto const& md : eventsV)
+		{
+			nlohmann::json obj;
+			obj["type"] = md->dataType;
+			obj["object"] = md->jsonObject;			
+			json.push_back(obj);
+		}
+
+		*outJson = copyString(json.dump(4));		
+		return 1;
+	}
+
+#if WITH_SECURT_REST_CLIENT
+	// remote instance
+	try
+	{
+		auto const remoteInstanceId = utility::conversions::to_string_t(context->instanceUuid.toString());
+
+
+		auto const data = context->connections.secuRtSseApi->securtConsumeEventsSse(context->instanceUuid.toString());
+
+		if (!data.empty())
+		{
+			*outJson = copyString(data);
+			return 1;
+		}
+
+		//auto const task = context->connections.secuRTApi->securtConsumeMetadataV1(remoteInstanceId).then(
+		//	[&](std::vector<std::shared_ptr<cvedia::rt::rest::client::SecurtConsumeMetadataV1_200_response_inner>>& response)
+		//{
+		//	if (response.empty())
+		//	{				
+		//		*outJson = nullptr;
+		//	}
+		//	else
+		//	{
+		//		nlohmann::json json = nlohmann::json::array();
+
+		//		for (auto const& md : response)
+		//		{
+		//			nlohmann::json obj;
+		//			obj["type"] = utility::conversions::to_utf8string(md->getDataType());
+		//			obj["metadata"] = utility::conversions::to_utf8string(md->getJsonObject());
+		//			json.push_back(obj);
+		//		}
+
+		//		*outJson = copyString(json.dump(4));
+		//	}
+		//});		
+
+		//auto const status = task.wait();
+		//if (status == pplx::task_status::completed)
+		//{
+		//	return 1;
+		//}
+		//else
+		//{
+		//	return -1;
+		//}
+
+		return 0;
 	}
 	catch (std::exception const&)
 	{
@@ -979,27 +1267,21 @@ int securt_update_instance_options(int const contextHandle, int const detectorMo
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateMode(detectorMode) || !validateSensitivity(detectionSensitivity) || !validateSensitivity(movementSensitivity) || !validateModality(sensorModality) ||
-		!validateBool(metadataMode) || !validateBool(statisticsMode) || !validateBool(diagnosticsMode) || !validateBool(debugMode))
-	{
-		return -1;
-	}
-
 	if (context->remoteIp.empty())
 	{
 		GET_SECURT(securt);
 
-		if (securt->getDetectorMode() != static_cast<cvedia::rt::iface::SecuRT::Mode>(detectorMode)) {
-			securt->setDetectorMode(static_cast<cvedia::rt::iface::SecuRT::Mode>(detectorMode));
+		if (securt->getDetectorMode() != static_cast<cvedia::rt::solution::SecuRT::Mode>(detectorMode)) {
+			securt->setDetectorMode(static_cast<cvedia::rt::solution::SecuRT::Mode>(detectorMode));
 		}
-		if (securt->getDetectionSensitivity() != static_cast<cvedia::rt::iface::SecuRT::Sensitivity>(detectionSensitivity)) {
-			securt->setDetectionSensitivity(static_cast<cvedia::rt::iface::SecuRT::Sensitivity>(detectionSensitivity));
+		if (securt->getDetectionSensitivity() != static_cast<cvedia::rt::solution::SecuRT::Sensitivity>(detectionSensitivity)) {
+			securt->setDetectionSensitivity(static_cast<cvedia::rt::solution::SecuRT::Sensitivity>(detectionSensitivity));
 		}
-		if (securt->getMovementSensitivity() != static_cast<cvedia::rt::iface::SecuRT::Sensitivity>(movementSensitivity)) {
-			securt->setMovementSensitivity(static_cast<cvedia::rt::iface::SecuRT::Sensitivity>(movementSensitivity));
+		if (securt->getMovementSensitivity() != static_cast<cvedia::rt::solution::SecuRT::Sensitivity>(movementSensitivity)) {
+			securt->setMovementSensitivity(static_cast<cvedia::rt::solution::SecuRT::Sensitivity>(movementSensitivity));
 		}
-		if (securt->getSensorModality() != static_cast<cvedia::rt::iface::SecuRT::Modality>(sensorModality)) {
-			securt->setSensorModality(static_cast<cvedia::rt::iface::SecuRT::Modality>(sensorModality));
+		if (securt->getSensorModality() != static_cast<cvedia::rt::solution::SecuRT::Modality>(sensorModality)) {
+			securt->setSensorModality(static_cast<cvedia::rt::solution::SecuRT::Modality>(sensorModality));
 		}
 		if (securt->getFrameRateLimit() != frameRateLimit) {
 			securt->setFrameRateLimit(frameRateLimit);
@@ -1055,16 +1337,11 @@ int securt_set_detector_mode(int const contextHandle, int const mode)
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateMode(mode))
-	{
-		return -1;
-	}
-
 	if (context->remoteIp.empty())
 	{
 		GET_SECURT(securt);
 
-		securt->setDetectorMode(static_cast<cvedia::rt::iface::SecuRT::Mode>(mode));
+		securt->setDetectorMode(static_cast<cvedia::rt::solution::SecuRT::Mode>(mode));
 		return 0;
 	}
 
@@ -1077,16 +1354,11 @@ int securt_set_detection_sensitivity(int const contextHandle, int const sensitiv
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateSensitivity(sensitivity))
-	{
-		return -1;
-	}
-
 	if (context->remoteIp.empty())
 	{
 		GET_SECURT(securt);
 
-		securt->setDetectionSensitivity(static_cast<cvedia::rt::iface::SecuRT::Sensitivity>(sensitivity));
+		securt->setDetectionSensitivity(static_cast<cvedia::rt::solution::SecuRT::Sensitivity>(sensitivity));
 		return 0;
 	}
 
@@ -1099,16 +1371,11 @@ int securt_set_movement_sensitivity(int const contextHandle, int const sensitivi
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateSensitivity(sensitivity))
-	{
-		return -1;
-	}
-
 	if (context->remoteIp.empty())
 	{
 		GET_SECURT(securt);
 
-		securt->setMovementSensitivity(static_cast<cvedia::rt::iface::SecuRT::Sensitivity>(sensitivity));
+		securt->setMovementSensitivity(static_cast<cvedia::rt::solution::SecuRT::Sensitivity>(sensitivity));
 		return 0;
 	}
 
@@ -1466,20 +1733,129 @@ int securt_need_data(int contextHandle, long long int const currentFrameTime)
 	return -1;
 }
 
-int securt_set_sensor_modality(int const contextHandle, int modality)
+void securt_free_string(void* ptr)
+{
+	if (ptr != nullptr)
+	{
+		free(ptr);
+	}
+}
+
+int securt_set_input_to_rtsp(int const contextHandle, char const* rtspUrl)
 {
 	GET_CONTEXT(context, contextHandle);
-
-	if (!validateModality(modality))
-	{
-		return -1;
-	}
 
 	if (context->remoteIp.empty())
 	{
 		GET_SECURT(securt);
 
-		securt->setSensorModality(static_cast<cvedia::rt::iface::SecuRT::Modality>(modality));
+		return securt->setInputToRtsp(rtspUrl);
+	}
+
+	// remote instance
+	// TODO: implement this
+	return -1;
+}
+
+int securt_set_input_to_manual(int const contextHandle)
+{
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+
+		return securt->setInputToManual();
+	}
+
+	// remote instance
+	// TODO: implement this
+	return -1;
+}
+
+char* securt_enable_hls_output(int const contextHandle)
+{
+	GET_CONTEXT_STR(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT_STR(securt);
+
+		return copyString(securt->enableHlsOutput());
+	}
+
+	// remote instance
+	// TODO: implement this
+	return nullptr;
+}
+
+int securt_disable_hls_output(int const contextHandle)
+{
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+
+		return securt->disableHlsOutput();
+	}
+
+	// remote instance
+	// TODO: implement this
+	return -1;
+}
+
+int securt_enable_rtsp_output(int const contextHandle, char const* rtspUri)
+{
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+
+		return securt->enableRtspOutput(rtspUri);
+	}
+
+	// remote instance
+	// TODO: implement this
+	return -1;
+}
+
+int securt_disable_rtsp_output(int const contextHandle, char const* rtspUri)
+{
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+
+		return securt->disableRtspOutput(rtspUri);
+	}
+
+	// remote instance
+	// TODO: implement this
+	return -1;
+}
+
+int securt_set_sensor_modality(int const contextHandle, int modality)
+{
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+
+		// confirm that the modality is supported
+		switch (modality)
+		{
+			case cvedia::rt::solution::SecuRT::Modality::RGB:
+			case cvedia::rt::solution::SecuRT::Modality::Thermal:
+				break;
+		default:
+			return -1;
+		}
+
+		securt->setSensorModality(static_cast<cvedia::rt::solution::SecuRT::Modality>(modality));
 		return 1;
 	}
 
@@ -1512,7 +1888,7 @@ int securt_set_diagnostics_mode(int const contextHandle, int diagnostics)
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateBool(diagnostics))
+	if (diagnostics < 0 || diagnostics > 1)
 	{
 		return -1;
 	}
@@ -1554,7 +1930,7 @@ int securt_set_debug_mode(int const contextHandle, int debugMode)
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateBool(debugMode))
+	if (debugMode < 0 || debugMode > 1)
 	{
 		return -1;
 	}
@@ -1596,7 +1972,7 @@ int securt_set_statistics_mode(int const contextHandle, int statisticsMode)
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateBool(statisticsMode))
+	if (statisticsMode < 0 || statisticsMode > 1)
 	{
 		return -1;
 	}
@@ -1639,7 +2015,7 @@ int securt_set_metadata_mode(int const contextHandle, int metadataMode)
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateBool(metadataMode))
+	if (metadataMode < 0 || metadataMode > 1)
 	{
 		return -1;
 	}
@@ -1682,11 +2058,6 @@ int securt_set_tentative_tracks(int const contextHandle, int enabled)
 {
 	GET_CONTEXT(context, contextHandle);
 
-	if (!validateBool(enabled))
-	{
-		return -1;
-	}
-
 	if (context->remoteIp.empty())
 	{
 		GET_SECURT(securt);
@@ -1723,11 +2094,115 @@ int securt_is_instance_running(int const contextHandle)
 
 	if (context->remoteIp.empty())
 	{
-		return api::instances::isRunning(context->instanceUuid) ? 1 : 0;
+		GET_SECURT(securt);
+
+		return securt->isRunning();
 	}
 
 	// remote instance	
 	return -1;
+}
+
+int securt_restart(int const contextHandle)
+{
+	GET_CONTEXT(context, contextHandle);
+
+	if (context->remoteIp.empty())
+	{
+		GET_SECURT(securt);
+
+		securt->restart();
+		return 1;
+	}
+
+#if WITH_SECURT_REST_CLIENT
+	// remote instance
+	try
+	{
+		auto const remoteInstanceId = utility::conversions::to_string_t(context->instanceUuid.toString());
+
+		auto const task = context->connections.secuRTApi->securtRestartInstanceV1(remoteInstanceId);
+		auto const status = task.wait();
+		if (status == pplx::task_status::completed)
+		{
+			return 1;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	catch (std::exception const&)
+	{
+		return -1;
+	}
+#else
+	LOGE << "Remote mode is not supported in this build";
+	return -1;
+#endif
+}
+
+/**************************
+* Remote connection API
+***************************/
+
+int securt_is_alive(int const contextHandle)
+{
+#if WITH_SECURT_REST_CLIENT
+	GET_CONTEXT(context, contextHandle);
+
+	try
+	{
+		auto const task = context->connections.apiClient->callApi(utility::conversions::to_string_t("/openapi.yaml"), web::http::methods::GET, {}, {}, {}, {}, {}, {});
+		auto const status = task.wait();
+		if (status == pplx::task_status::completed)
+		{
+			return 1;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	catch (std::exception const& ex)
+	{
+		std::string const t = ex.what();
+		LOGE << t;
+		return -1;
+	}
+#else
+	LOGE << "Remote mode is not supported in this build";
+	(void)contextHandle;
+	return -1;
+#endif
+}
+
+void securt_enable_remote_mode()
+{
+	cvedia::rt::solution::SecuRT::remoteDiscovery_.start();
+}
+
+void securt_disable_remote_mode()
+{
+	cvedia::rt::solution::SecuRT::remoteDiscovery_.stop();
+}
+
+char* securt_find_remote_server() {
+	auto resp = cvedia::rt::solution::SecuRT::remoteDiscovery_.getAvailableServer();
+	if (!resp)
+	{
+		return nullptr;
+	}
+
+	return copyString(resp.value());
+}
+
+void securt_reset()
+{
+	std::unique_lock<std::mutex> lock(securtMutex);
+	contextData_.clear();
+
+	incContextId = 1;
 }
 
 int securt_set_config_value(int const handle, char const* key, char const* value)
@@ -1801,44 +2276,15 @@ int securt_set_render_preset(int const contextHandle, char const* preset)
 	return -1;
 }
 
-int securt_set_auto_restart(int const contextHandle, int const state)
-{
-	GET_CONTEXT(context, contextHandle);
-
-	if (!validateBool(state))
-	{
-		return -1;
-	}
-
-	if (context->remoteIp.empty())
-	{
-		auto const ctrl = api::instances::getInstanceController(context->instanceUuid);
-		if (ctrl)
-		{
-			return ctrl.value()->setAutoRestart(static_cast<bool>(state)) ? 1 : -1;
-		}
-		return -1;
-	}
-
-	// remote instance
-	// TODO: implement this
-	return -1;
-}
-
 int securt_set_blocking_readahead_queue(int const handle, int const state)
 {
 	GET_CONTEXT(context, handle);
-
-	if (!validateBool(state))
-	{
-		return -1;
-	}
 
 	if (context->remoteIp.empty())
 	{
 		GET_SECURT(securt);
 
-		securt->setBlockingReadaheadQueue(static_cast<bool>(state));
+		securt->setBlockingReadaheadQueue(state);
 	}
 
 	return 1;

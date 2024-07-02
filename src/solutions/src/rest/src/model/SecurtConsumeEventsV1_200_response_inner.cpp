@@ -12,7 +12,7 @@
 
 
 
-#include "rt_rest_client/model/SecurtConsumeEventsV1_200_response_inner.h"
+#include "securt_rest_client/model/SecurtConsumeEventsV1_200_response_inner.h"
 
 namespace cvedia {
 namespace rt {

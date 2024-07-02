@@ -41,7 +41,7 @@ namespace cvedia {
 				virtual expected<void> setPrivacyMasks(std::vector<std::vector<Point2f>> const& masks) = 0;
 				virtual expected<void> setPrivacyMode(std::string mode, CValue const& options) = 0;
 
-				virtual expected<iface::InputHandler*> getInputHandler() = 0;
+				virtual expected<std::shared_ptr<iface::InputHandler>> getInputHandler() = 0;
 				virtual bool canRead() = 0;
 				virtual void forceRead() = 0;
 				virtual bool isPaused() = 0;

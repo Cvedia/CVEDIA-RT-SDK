@@ -10,8 +10,6 @@
 #include <shared_mutex>
 #include <sol/forward.hpp>
 
-#include <tracy/Tracy.hpp>
-
 #include "defines.h"
 
 namespace sol {

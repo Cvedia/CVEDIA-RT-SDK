@@ -17,7 +17,6 @@ namespace cvedia {
 				Tracker(std::string const& moduleName) : ModuleImpl(moduleName) {}
 
 				virtual expected<cvec> trackObjects(cbuffer const& buffer, cvec const& boxes, sol::protected_function callback) = 0;
-				virtual expected<void> updateThumbnails(cbuffer const& buffer) = 0;
 				virtual expected<void> updateTracksMovement(cbuffer const& buffer) = 0;
 				virtual expected<bool> deleteTrackById(int id) = 0;
 				virtual expected<std::vector<int>> getTrackIds(int stateFilter=0) = 0;
@@ -39,10 +38,6 @@ namespace cvedia {
 				virtual pCValue getMatchedTracks() = 0;
 				virtual pCValue getUnmatchedTracks() = 0;
 				virtual expected<int> getTrackCount() = 0;
-				virtual expected<void> updateMotionBuffer(cbuffer const& buffer) = 0;
-				virtual expected<cbuffer> getMotionBuffer() = 0;
-				virtual expected<cbuffer> splitMotionBufferForDebugOutput(cbuffer const& buffer)=0;
-				virtual expected<void> drawMovementDirectionInMotionBuffer(cbuffer const& buffer, float movementDirectionX, float move) = 0;
 			};
 		}
 	}

@@ -36,272 +36,6 @@ SecuRTAreasApi::~SecuRTAreasApi()
 {
 }
 
-pplx::task<std::shared_ptr<SecurtCreateArmedPersonAreaV1_201_response>> SecuRTAreasApi::securtCreateArmedPersonAreaV1(utility::string_t instanceId, boost::optional<std::shared_ptr<AreaArmedPersonWrite>> areaArmedPersonWrite) const
-{
-
-
-    std::shared_ptr<const ApiConfiguration> localVarApiConfiguration( m_ApiClient->getConfiguration() );
-    utility::string_t localVarPath = utility::conversions::to_string_t("/v1/securt/instance/{instanceId}/area/armed_person");
-    boost::replace_all(localVarPath, utility::conversions::to_string_t("{") + utility::conversions::to_string_t("instanceId") + utility::conversions::to_string_t("}"), web::uri::encode_uri(ApiClient::parameterToString(instanceId)));
-
-    std::map<utility::string_t, utility::string_t> localVarQueryParams;
-    std::map<utility::string_t, utility::string_t> localVarHeaderParams( localVarApiConfiguration->getDefaultHeaders() );
-    std::map<utility::string_t, utility::string_t> localVarFormParams;
-    std::map<utility::string_t, std::shared_ptr<HttpContent>> localVarFileParams;
-
-    std::unordered_set<utility::string_t> localVarResponseHttpContentTypes;
-    localVarResponseHttpContentTypes.insert( utility::conversions::to_string_t("application/json") );
-
-    utility::string_t localVarResponseHttpContentType;
-
-    // use JSON if possible
-    if ( localVarResponseHttpContentTypes.size() == 0 )
-    {
-        localVarResponseHttpContentType = utility::conversions::to_string_t("application/json");
-    }
-    // JSON
-    else if ( localVarResponseHttpContentTypes.find(utility::conversions::to_string_t("application/json")) != localVarResponseHttpContentTypes.end() )
-    {
-        localVarResponseHttpContentType = utility::conversions::to_string_t("application/json");
-    }
-    // multipart formdata
-    else if( localVarResponseHttpContentTypes.find(utility::conversions::to_string_t("multipart/form-data")) != localVarResponseHttpContentTypes.end() )
-    {
-        localVarResponseHttpContentType = utility::conversions::to_string_t("multipart/form-data");
-    }
-    else
-    {
-        throw ApiException(400, utility::conversions::to_string_t("SecuRTAreasApi->securtCreateArmedPersonAreaV1 does not produce any supported media type"));
-    }
-
-    localVarHeaderParams[utility::conversions::to_string_t("Accept")] = localVarResponseHttpContentType;
-
-    std::unordered_set<utility::string_t> localVarConsumeHttpContentTypes;
-    localVarConsumeHttpContentTypes.insert( utility::conversions::to_string_t("application/json") );
-
-
-    std::shared_ptr<IHttpBody> localVarHttpBody;
-    utility::string_t localVarRequestHttpContentType;
-
-    // use JSON if possible
-    if ( localVarConsumeHttpContentTypes.size() == 0 || localVarConsumeHttpContentTypes.find(utility::conversions::to_string_t("application/json")) != localVarConsumeHttpContentTypes.end() )
-    {
-        localVarRequestHttpContentType = utility::conversions::to_string_t("application/json");
-        web::json::value localVarJson;
-
-        if (areaArmedPersonWrite)
-            localVarJson = ModelBase::toJson(*areaArmedPersonWrite);
-
-        localVarHttpBody = std::shared_ptr<IHttpBody>( new JsonBody( localVarJson ) );
-    }
-    // multipart formdata
-    else if( localVarConsumeHttpContentTypes.find(utility::conversions::to_string_t("multipart/form-data")) != localVarConsumeHttpContentTypes.end() )
-    {
-        localVarRequestHttpContentType = utility::conversions::to_string_t("multipart/form-data");
-        std::shared_ptr<MultipartFormData> localVarMultipart(new MultipartFormData);
-
-        if(areaArmedPersonWrite && (*areaArmedPersonWrite).get())
-        {
-            (*areaArmedPersonWrite)->toMultipart(localVarMultipart, utility::conversions::to_string_t("areaArmedPersonWrite"));
-        }
-        
-
-        localVarHttpBody = localVarMultipart;
-        localVarRequestHttpContentType += utility::conversions::to_string_t("; boundary=") + localVarMultipart->getBoundary();
-    }
-    else if (localVarConsumeHttpContentTypes.find(utility::conversions::to_string_t("application/x-www-form-urlencoded")) != localVarConsumeHttpContentTypes.end())
-    {
-        localVarRequestHttpContentType = utility::conversions::to_string_t("application/x-www-form-urlencoded");
-    }
-    else
-    {
-        throw ApiException(415, utility::conversions::to_string_t("SecuRTAreasApi->securtCreateArmedPersonAreaV1 does not consume any supported media type"));
-    }
-
-
-    return m_ApiClient->callApi(localVarPath, utility::conversions::to_string_t("POST"), localVarQueryParams, localVarHttpBody, localVarHeaderParams, localVarFormParams, localVarFileParams, localVarRequestHttpContentType)
-    .then([=](web::http::http_response localVarResponse)
-    {
-        if (m_ApiClient->getResponseHandler())
-        {
-            m_ApiClient->getResponseHandler()(localVarResponse.status_code(), localVarResponse.headers());
-        }
-
-        // 1xx - informational : OK
-        // 2xx - successful       : OK
-        // 3xx - redirection   : OK
-        // 4xx - client error  : not OK
-        // 5xx - client error  : not OK
-        if (localVarResponse.status_code() >= 400)
-        {
-            throw ApiException(localVarResponse.status_code()
-                , utility::conversions::to_string_t("error calling securtCreateArmedPersonAreaV1: ") + localVarResponse.reason_phrase()
-                , std::make_shared<std::stringstream>(localVarResponse.extract_utf8string(true).get()));
-        }
-
-        // check response content type
-        if(localVarResponse.headers().has(utility::conversions::to_string_t("Content-Type")))
-        {
-            utility::string_t localVarContentType = localVarResponse.headers()[utility::conversions::to_string_t("Content-Type")];
-            if( localVarContentType.find(localVarResponseHttpContentType) == std::string::npos )
-            {
-                throw ApiException(500
-                    , utility::conversions::to_string_t("error calling securtCreateArmedPersonAreaV1: unexpected response type: ") + localVarContentType
-                    , std::make_shared<std::stringstream>(localVarResponse.extract_utf8string(true).get()));
-            }
-        }
-
-    return localVarResponse.extract_string();
-    })
-    .then([=](utility::string_t localVarResponse)
-    {
-    std::shared_ptr<SecurtCreateArmedPersonAreaV1_201_response> localVarResult(new SecurtCreateArmedPersonAreaV1_201_response());
-
-    if(localVarResponseHttpContentType == utility::conversions::to_string_t("application/json"))
-    {
-    if (localVarResponse.empty()) {
-    return localVarResult;
-    }
-    web::json::value localVarJson = web::json::value::parse(localVarResponse);
-
-    ModelBase::fromJson(localVarJson, localVarResult);
-    }
-    // else if(localVarResponseHttpContentType == utility::conversions::to_string_t("multipart/form-data"))
-    // {
-    // TODO multipart response parsing
-    // }
-    else
-    {
-    throw ApiException(500
-    , utility::conversions::to_string_t("error calling securtCreateArmedPersonAreaV1: unsupported response type"));
-    }
-
-    return localVarResult;
-    });
-    }
-pplx::task<void> SecuRTAreasApi::securtCreateArmedPersonAreaWithIdV1(utility::string_t instanceId, utility::string_t areaId, boost::optional<std::shared_ptr<AreaArmedPersonWrite>> areaArmedPersonWrite) const
-{
-
-
-    std::shared_ptr<const ApiConfiguration> localVarApiConfiguration( m_ApiClient->getConfiguration() );
-    utility::string_t localVarPath = utility::conversions::to_string_t("/v1/securt/instance/{instanceId}/area/armed_person/{areaId}");
-    boost::replace_all(localVarPath, utility::conversions::to_string_t("{") + utility::conversions::to_string_t("instanceId") + utility::conversions::to_string_t("}"), web::uri::encode_uri(ApiClient::parameterToString(instanceId)));
-    boost::replace_all(localVarPath, utility::conversions::to_string_t("{") + utility::conversions::to_string_t("areaId") + utility::conversions::to_string_t("}"), web::uri::encode_uri(ApiClient::parameterToString(areaId)));
-
-    std::map<utility::string_t, utility::string_t> localVarQueryParams;
-    std::map<utility::string_t, utility::string_t> localVarHeaderParams( localVarApiConfiguration->getDefaultHeaders() );
-    std::map<utility::string_t, utility::string_t> localVarFormParams;
-    std::map<utility::string_t, std::shared_ptr<HttpContent>> localVarFileParams;
-
-    std::unordered_set<utility::string_t> localVarResponseHttpContentTypes;
-
-    utility::string_t localVarResponseHttpContentType;
-
-    // use JSON if possible
-    if ( localVarResponseHttpContentTypes.size() == 0 )
-    {
-        localVarResponseHttpContentType = utility::conversions::to_string_t("application/json");
-    }
-    // JSON
-    else if ( localVarResponseHttpContentTypes.find(utility::conversions::to_string_t("application/json")) != localVarResponseHttpContentTypes.end() )
-    {
-        localVarResponseHttpContentType = utility::conversions::to_string_t("application/json");
-    }
-    // multipart formdata
-    else if( localVarResponseHttpContentTypes.find(utility::conversions::to_string_t("multipart/form-data")) != localVarResponseHttpContentTypes.end() )
-    {
-        localVarResponseHttpContentType = utility::conversions::to_string_t("multipart/form-data");
-    }
-    else
-    {
-        throw ApiException(400, utility::conversions::to_string_t("SecuRTAreasApi->securtCreateArmedPersonAreaWithIdV1 does not produce any supported media type"));
-    }
-
-    localVarHeaderParams[utility::conversions::to_string_t("Accept")] = localVarResponseHttpContentType;
-
-    std::unordered_set<utility::string_t> localVarConsumeHttpContentTypes;
-    localVarConsumeHttpContentTypes.insert( utility::conversions::to_string_t("application/json") );
-
-
-    std::shared_ptr<IHttpBody> localVarHttpBody;
-    utility::string_t localVarRequestHttpContentType;
-
-    // use JSON if possible
-    if ( localVarConsumeHttpContentTypes.size() == 0 || localVarConsumeHttpContentTypes.find(utility::conversions::to_string_t("application/json")) != localVarConsumeHttpContentTypes.end() )
-    {
-        localVarRequestHttpContentType = utility::conversions::to_string_t("application/json");
-        web::json::value localVarJson;
-
-        if (areaArmedPersonWrite)
-            localVarJson = ModelBase::toJson(*areaArmedPersonWrite);
-
-        localVarHttpBody = std::shared_ptr<IHttpBody>( new JsonBody( localVarJson ) );
-    }
-    // multipart formdata
-    else if( localVarConsumeHttpContentTypes.find(utility::conversions::to_string_t("multipart/form-data")) != localVarConsumeHttpContentTypes.end() )
-    {
-        localVarRequestHttpContentType = utility::conversions::to_string_t("multipart/form-data");
-        std::shared_ptr<MultipartFormData> localVarMultipart(new MultipartFormData);
-
-        if(areaArmedPersonWrite && (*areaArmedPersonWrite).get())
-        {
-            (*areaArmedPersonWrite)->toMultipart(localVarMultipart, utility::conversions::to_string_t("areaArmedPersonWrite"));
-        }
-        
-
-        localVarHttpBody = localVarMultipart;
-        localVarRequestHttpContentType += utility::conversions::to_string_t("; boundary=") + localVarMultipart->getBoundary();
-    }
-    else if (localVarConsumeHttpContentTypes.find(utility::conversions::to_string_t("application/x-www-form-urlencoded")) != localVarConsumeHttpContentTypes.end())
-    {
-        localVarRequestHttpContentType = utility::conversions::to_string_t("application/x-www-form-urlencoded");
-    }
-    else
-    {
-        throw ApiException(415, utility::conversions::to_string_t("SecuRTAreasApi->securtCreateArmedPersonAreaWithIdV1 does not consume any supported media type"));
-    }
-
-
-    return m_ApiClient->callApi(localVarPath, utility::conversions::to_string_t("PUT"), localVarQueryParams, localVarHttpBody, localVarHeaderParams, localVarFormParams, localVarFileParams, localVarRequestHttpContentType)
-    .then([=](web::http::http_response localVarResponse)
-    {
-        if (m_ApiClient->getResponseHandler())
-        {
-            m_ApiClient->getResponseHandler()(localVarResponse.status_code(), localVarResponse.headers());
-        }
-
-        // 1xx - informational : OK
-        // 2xx - successful       : OK
-        // 3xx - redirection   : OK
-        // 4xx - client error  : not OK
-        // 5xx - client error  : not OK
-        if (localVarResponse.status_code() >= 400)
-        {
-            throw ApiException(localVarResponse.status_code()
-                , utility::conversions::to_string_t("error calling securtCreateArmedPersonAreaWithIdV1: ") + localVarResponse.reason_phrase()
-                , std::make_shared<std::stringstream>(localVarResponse.extract_utf8string(true).get()));
-        }
-
-        // check response content type
-        if(localVarResponse.headers().has(utility::conversions::to_string_t("Content-Type")))
-        {
-            utility::string_t localVarContentType = localVarResponse.headers()[utility::conversions::to_string_t("Content-Type")];
-            if( localVarContentType.find(localVarResponseHttpContentType) == std::string::npos )
-            {
-                throw ApiException(500
-                    , utility::conversions::to_string_t("error calling securtCreateArmedPersonAreaWithIdV1: unexpected response type: ") + localVarContentType
-                    , std::make_shared<std::stringstream>(localVarResponse.extract_utf8string(true).get()));
-            }
-        }
-
-    return localVarResponse.extract_string();
-    })
-    .then([=](utility::string_t localVarResponse)
-    {
-    (void)localVarResponse;
-    return void();
-    });
-    }
 pplx::task<std::shared_ptr<SecurtCreateCrossingAreaV1_201_response>> SecuRTAreasApi::securtCreateCrossingAreaV1(utility::string_t instanceId, std::shared_ptr<AreaCrossingWrite> areaCrossingWrite) const
 {
 
@@ -432,7 +166,7 @@ pplx::task<std::shared_ptr<SecurtCreateCrossingAreaV1_201_response>> SecuRTAreas
     if(localVarResponseHttpContentType == utility::conversions::to_string_t("application/json"))
     {
     if (localVarResponse.empty()) {
-    return localVarResult;
+        return localVarResult;
     }
     web::json::value localVarJson = web::json::value::parse(localVarResponse);
 
@@ -570,7 +304,6 @@ pplx::task<void> SecuRTAreasApi::securtCreateCrossingAreaWithIdV1(utility::strin
     })
     .then([=](utility::string_t localVarResponse)
     {
-    (void)localVarResponse;
     return void();
     });
     }
@@ -704,7 +437,7 @@ pplx::task<std::shared_ptr<SecurtCreateCrowdingAreaV1_201_response>> SecuRTAreas
     if(localVarResponseHttpContentType == utility::conversions::to_string_t("application/json"))
     {
     if (localVarResponse.empty()) {
-    return localVarResult;
+        return localVarResult;
     }
     web::json::value localVarJson = web::json::value::parse(localVarResponse);
 
@@ -842,7 +575,6 @@ pplx::task<void> SecuRTAreasApi::securtCreateCrowdingAreaWithIdV1(utility::strin
     })
     .then([=](utility::string_t localVarResponse)
     {
-    (void)localVarResponse;
     return void();
     });
     }
@@ -976,7 +708,7 @@ pplx::task<std::shared_ptr<SecurtCreateIntrusionAreaV1_201_response>> SecuRTArea
     if(localVarResponseHttpContentType == utility::conversions::to_string_t("application/json"))
     {
     if (localVarResponse.empty()) {
-    return localVarResult;
+        return localVarResult;
     }
     web::json::value localVarJson = web::json::value::parse(localVarResponse);
 
@@ -1114,7 +846,6 @@ pplx::task<void> SecuRTAreasApi::securtCreateIntrusionAreaWithIdV1(utility::stri
     })
     .then([=](utility::string_t localVarResponse)
     {
-    (void)localVarResponse;
     return void();
     });
     }
@@ -1248,7 +979,7 @@ pplx::task<std::shared_ptr<SecurtCreateLoiteringAreaV1_201_response>> SecuRTArea
     if(localVarResponseHttpContentType == utility::conversions::to_string_t("application/json"))
     {
     if (localVarResponse.empty()) {
-    return localVarResult;
+        return localVarResult;
     }
     web::json::value localVarJson = web::json::value::parse(localVarResponse);
 
@@ -1386,7 +1117,6 @@ pplx::task<void> SecuRTAreasApi::securtCreateLoiteringAreaWithIdV1(utility::stri
     })
     .then([=](utility::string_t localVarResponse)
     {
-    (void)localVarResponse;
     return void();
     });
     }
@@ -1491,7 +1221,6 @@ pplx::task<void> SecuRTAreasApi::securtDeleteAllAreasV1(utility::string_t instan
     })
     .then([=](utility::string_t localVarResponse)
     {
-    (void)localVarResponse;
     return void();
     });
     }
@@ -1597,7 +1326,6 @@ pplx::task<void> SecuRTAreasApi::securtDeleteAreaV1(utility::string_t instanceId
     })
     .then([=](utility::string_t localVarResponse)
     {
-    (void)localVarResponse;
     return void();
     });
     }
@@ -1708,7 +1436,7 @@ pplx::task<std::shared_ptr<SecurtGetAreasV1_200_response>> SecuRTAreasApi::secur
     if(localVarResponseHttpContentType == utility::conversions::to_string_t("application/json"))
     {
     if (localVarResponse.empty()) {
-    return localVarResult;
+        return localVarResult;
     }
     web::json::value localVarJson = web::json::value::parse(localVarResponse);
 

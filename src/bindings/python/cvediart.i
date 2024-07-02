@@ -13,7 +13,6 @@
 %}
 
 %include rt_py.i
-%include core_py.i
 %include securt_py.i
 
 %pythonbegin %{

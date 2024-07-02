@@ -16,8 +16,7 @@ namespace cvedia {
 			public:
 				virtual ~EventDispatcher() = default;
 				virtual std::vector<std::string> getBoundEventTypes() = 0;
-				virtual int bind(std::string descriptor, std::function<void(pCValue, std::string, float)>&& slot, float callbackId = 0) = 0;
-				virtual void unbind(int bindId) = 0;
+				virtual void bind(std::string descriptor, std::function<void(pCValue, std::string, float)>&& slot, float callbackId = 0) = 0;
 
 				virtual long long post(pCValue eventValues, std::string const& type, std::string const& sourceDesc, cbuffer img, std::string const& timestamp, bool processActions) = 0;
 

@@ -11,13 +11,11 @@
 #include <string>                // for string
 #include <utility>               // for pair
 #include <vector>                // for vector
-
 #include "builtin/moduleimpl.h"  // for createInferenceHandler
 #include "defines.h"             // for NODISCARD, pCValue
 #include "rtconfig.h"            // for shared_mutex_class
 #include <xtensor/xarray.hpp>    // for xarray_container
 #include "rterror.h"
-#include "api/factory.h"
 
 namespace cvedia { namespace rt { class CValue; } }
 namespace cvedia { namespace rt { class Tensor; } }  // lines 19-19
@@ -68,8 +66,8 @@ namespace cvedia {
 				NODISCARD static expected<module::preprocessHandler> getPreProcessHandler(std::string const& handler);
 				NODISCARD static expected<module::postprocessHandler> getPostProcessHandler(std::string const& handler);
 
-				NODISCARD static expected<std::shared_ptr<iface::InferenceEngine>> createBackend(std::string const& name, std::string const& implementation = api::factory::DEFAULT);
-//				NODISCARD static expected<std::shared_ptr<iface::InferenceEngine>> getBackendByName(std::string const& name);
+				NODISCARD static expected<std::shared_ptr<iface::InferenceEngine>> createBackend(std::string const& name);
+				NODISCARD static expected<std::shared_ptr<iface::InferenceEngine>> getBackendByName(std::string const& name);
 
 				NODISCARD static std::vector<std::string> getAllSchemeHandlers();
 				NODISCARD static std::vector<std::pair<std::string, std::string>> getAllDevices();
@@ -95,7 +93,7 @@ namespace cvedia {
 
 				//static std::vector<std::pair<std::string, std::string>> foundDevices_;
 
-				static std::shared_mutex muxBackends_;
+				static shared_mutex_class muxBackends_;
 			};
 		}
 	}

@@ -19,7 +19,6 @@ namespace cvedia {
 		//! API for controlling the server and lifecycle management of runtime instances
 	namespace rt {
 		namespace api {
-
 			EXPORT void reloadConfig();
 			EXPORT void setPluginPath(std::string const& path);
 			EXPORT std::vector<std::string> getLoadedPlugins();

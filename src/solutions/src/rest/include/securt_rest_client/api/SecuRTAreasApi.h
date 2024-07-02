@@ -24,12 +24,10 @@
 
 #include "securt_rest_client/ApiClient.h"
 
-#include "securt_rest_client/model/AreaArmedPersonWrite.h"
 #include "securt_rest_client/model/AreaCrossingWrite.h"
 #include "securt_rest_client/model/AreaCrowdingWrite.h"
 #include "securt_rest_client/model/AreaIntrusionWrite.h"
 #include "securt_rest_client/model/AreaLoiteringWrite.h"
-#include "securt_rest_client/model/SecurtCreateArmedPersonAreaV1_201_response.h"
 #include "securt_rest_client/model/SecurtCreateCrossingAreaV1_201_response.h"
 #include "securt_rest_client/model/SecurtCreateCrowdingAreaV1_201_response.h"
 #include "securt_rest_client/model/SecurtCreateIntrusionAreaV1_201_response.h"
@@ -55,32 +53,6 @@ public:
 
     EXPORT virtual ~SecuRTAreasApi();
 
-    /// <summary>
-    /// Create an armed person area
-    /// </summary>
-    /// <remarks>
-    /// 
-    /// </remarks>
-    /// <param name="instanceId"></param>
-    /// <param name="areaArmedPersonWrite"> (optional)</param>
-    EXPORT pplx::task<std::shared_ptr<SecurtCreateArmedPersonAreaV1_201_response>> securtCreateArmedPersonAreaV1(
-        utility::string_t instanceId,
-        boost::optional<std::shared_ptr<AreaArmedPersonWrite>> areaArmedPersonWrite
-    ) const;
-    /// <summary>
-    /// Create an armed person area
-    /// </summary>
-    /// <remarks>
-    /// 
-    /// </remarks>
-    /// <param name="instanceId"></param>
-    /// <param name="areaId"></param>
-    /// <param name="areaArmedPersonWrite"> (optional)</param>
-    EXPORT pplx::task<void> securtCreateArmedPersonAreaWithIdV1(
-        utility::string_t instanceId,
-        utility::string_t areaId,
-        boost::optional<std::shared_ptr<AreaArmedPersonWrite>> areaArmedPersonWrite
-    ) const;
     /// <summary>
     /// Create a crossing area
     /// </summary>
