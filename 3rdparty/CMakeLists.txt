@@ -1,0 +1,18 @@
+if (BUILD_XTENSOR_LIB)
+    message(STATUS "Building XTENSOR lib")
+    find_package("OpenMP")
+    add_subdirectory ("xsimd")
+
+    add_subdirectory ("xtl")
+    add_subdirectory ("xtensor")
+endif()
+if (BUILD_FLATBUFFERS_LIB)
+    message(STATUS "Building FlatBuffers lib")
+    add_subdirectory("flatbuffers")
+endif()
+if (BUILD_LUA_LIB)
+    message(STATUS "Building Lua lib")
+    add_subdirectory("Lua")
+endif()
+
+add_subdirectory("imgui")
