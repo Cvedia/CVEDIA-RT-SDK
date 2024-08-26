@@ -1,0 +1,29 @@
+// CVEDIA-RT configuration options
+#cmakedefine01 WITH_MNN_MODULE
+#cmakedefine01 WITH_CORE_REST_CLIENT
+#cmakedefine01 WITH_SECURT_REST_CLIENT
+
+#cmakedefine01 BUILD_WIN32
+#cmakedefine01 BUILD_LINUX_GENERIC
+
+#cmakedefine01 WITH_TRACY_MUTEXES
+
+#cmakedefine01 LINK_ONNX_STATIC
+
+#if WITH_TRACY_MUTEXES
+#include <tracy/Tracy.hpp>
+#define shared_mutex_class SharedLockableBase(std::shared_mutex)
+#define shared_mutex_inst(arg) TracySharedLockable(std::shared_mutex, arg)
+#define mutex_class LockableBase(std::mutex)
+#define mutex_inst(arg) TracyLockable(std::mutex, arg)
+#else
+#define shared_mutex_class std::shared_mutex
+#define shared_mutex_inst(arg) std::shared_mutex arg
+#define mutex_class std::mutex
+#define mutex_inst(arg) std::mutex arg
+#endif
+
+
+#if WITH_CORE_REST_CLIENT || WITH_SECURT_REST_CLIENT
+    #define WITH_REST_CLIENT 1
+#endif
