@@ -1,0 +1,5 @@
+numpy>=1.24.4,<1.26.0
+jsonschema
+pytest
+requests
+opencv-python

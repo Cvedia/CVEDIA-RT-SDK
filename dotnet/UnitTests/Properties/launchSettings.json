@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "UnitTests": {
+      "commandName": "Project",
+      "workingDirectory": "C:\\CVEDIA\\redist",
+      "nativeDebugging": true
+    }
+  }
+}
