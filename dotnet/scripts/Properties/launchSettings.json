@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "scripts": {
+      "commandName": "Project",
+      "nativeDebugging": false
+    }
+  }
+}
